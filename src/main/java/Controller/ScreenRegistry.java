@@ -11,5 +11,6 @@ public final class ScreenRegistry {
 
     public static void registerAll(AppController app) {
         SetupScreens.register(app);
+        BoardScreens.register(app);
     }
 }
