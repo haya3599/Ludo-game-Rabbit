@@ -1,15 +1,12 @@
 package Controller;
 
+import Model.Dice;
+import Model.Game;
 import Model.GameConfig;
-import Model.MatchSetup;
-import Model.Player;
 import View.GameScreen;
 
-import java.util.List;
-
 /**
- * Opens the Easy board after a valid setup. Piece movement is connected by the
- * dice-movement feature; this screen already draws whatever positions the model holds.
+ * Starts an Easy game and connects the board to dice rolling and movement.
  */
 public final class BoardScreens {
 
@@ -21,11 +18,9 @@ public final class BoardScreens {
     }
 
     private static void open(AppController app, GameConfig config) {
-        List<Player> players = MatchSetup.createPlayers(config);
-        GameScreen screen = new GameScreen(players);
-        screen.setMessage("The board is ready. Rolling and movement are connected in the dice-movement feature.");
-        screen.setOnRoll(() -> screen.setMessage(
-                "The Roll Dice button is on the board. Movement rules are added in the next feature."));
+        Game game = Game.start(config, Dice.random());
+        GameScreen screen = new GameScreen(game.getPlayers());
+        new GameplayController(game, screen);
         screen.setOnLeave(() -> app.show(ScreenId.HOME));
         app.register(ScreenId.BOARD, screen);
         app.show(ScreenId.BOARD);
