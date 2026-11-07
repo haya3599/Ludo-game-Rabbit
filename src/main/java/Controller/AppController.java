@@ -1,10 +1,12 @@
 package Controller;
 
+import Model.GameConfig;
 import View.MainFrame;
 import View.PlaceholderScreen;
 
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
+import java.util.function.Consumer;
 
 /**
  * Application coordinator. Feature screens register themselves and the
@@ -13,6 +15,7 @@ import javax.swing.JOptionPane;
 public final class AppController {
 
     private final MainFrame frame;
+    private Consumer<GameConfig> gameStartHandler;
 
     private AppController() {
         this.frame = new MainFrame();
@@ -43,6 +46,22 @@ public final class AppController {
 
     public MainFrame getFrame() {
         return frame;
+    }
+
+    public void setGameStartHandler(Consumer<GameConfig> gameStartHandler) {
+        this.gameStartHandler = gameStartHandler;
+    }
+
+    public void onGameConfigured(GameConfig config) {
+        if (gameStartHandler != null) {
+            gameStartHandler.accept(config);
+            return;
+        }
+        JOptionPane.showMessageDialog(
+                frame,
+                "The game board arrives in a later feature.",
+                "Ludo Educational Game",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void showInitialScreen() {

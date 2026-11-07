@@ -41,7 +41,16 @@ public final class MainFrame extends JFrame {
     }
 
     public void showScreen(String id) {
+        JComponent selected = screens.get(id);
+        if (selected == null) {
+            return;
+        }
+        for (JComponent screen : screens.values()) {
+            screen.setVisible(screen == selected);
+        }
+        container.setComponentZOrder(selected, 0);
         cards.show(container, id);
+        selected.setVisible(true);
         container.revalidate();
         container.repaint();
     }
