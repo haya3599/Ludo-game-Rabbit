@@ -32,10 +32,10 @@ public final class HomeScreen extends JPanel {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(new Color(255, 250, 242, 235));
         card.setBorder(new EmptyBorder(36, 42, 36, 42));
-        card.setPreferredSize(new Dimension(460, 460));
+        card.setPreferredSize(new Dimension(520, 460));
 
         JLabel eyebrow = label("TEAM RABBIT", Font.SANS_SERIF, Font.BOLD, 13, new Color(112, 48, 96));
-        JLabel title = label("LUDO EDUCATIONAL GAME", Font.SERIF, Font.BOLD, 32, UiKit.NAVY);
+        JLabel title = label("<html>LUDO EDUCATIONAL<br>GAME</html>", Font.SERIF, Font.BOLD, 34, UiKit.NAVY);
         JLabel subtitle = label("A colourful introduction to Easy Ludo.", Font.SANS_SERIF, Font.PLAIN, 15, new Color(70, 74, 90));
 
         configure(newGameButton);

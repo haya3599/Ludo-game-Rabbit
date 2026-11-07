@@ -5,6 +5,8 @@ import Model.Game;
 import Model.GameConfig;
 import View.GameScreen;
 
+import javax.swing.JOptionPane;
+
 /**
  * Starts an Easy game and connects the board to dice rolling and movement.
  */
@@ -21,7 +23,16 @@ public final class BoardScreens {
         Game game = Game.start(config, Dice.random());
         GameScreen screen = new GameScreen(game.getPlayers());
         new GameplayController(game, screen);
-        screen.setOnLeave(() -> app.show(ScreenId.HOME));
+        screen.setOnLeave(() -> {
+            int choice = JOptionPane.showConfirmDialog(
+                    app.getFrame(),
+                    "Leave this game and return to the home screen?",
+                    "Ludo Educational Game",
+                    JOptionPane.YES_NO_OPTION);
+            if (choice == JOptionPane.YES_OPTION) {
+                app.show(ScreenId.HOME);
+            }
+        });
         app.register(ScreenId.BOARD, screen);
         app.show(ScreenId.BOARD);
     }

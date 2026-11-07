@@ -63,8 +63,11 @@ public final class GameScreen extends JPanel {
         JPanel playerRow = new JPanel();
         playerRow.setOpaque(false);
         playerRow.setLayout(new BoxLayout(playerRow, BoxLayout.X_AXIS));
+        colorChip.setOpaque(true);
+        colorChip.setMinimumSize(new Dimension(18, 18));
         colorChip.setPreferredSize(new Dimension(18, 18));
         colorChip.setMaximumSize(new Dimension(18, 18));
+        colorChip.setBorder(javax.swing.BorderFactory.createLineBorder(UiKit.INK));
         playerLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 18));
         playerRow.add(colorChip);
         playerRow.add(Box.createHorizontalStrut(8));
@@ -85,8 +88,13 @@ public final class GameScreen extends JPanel {
 
         rollButton.addActionListener(event -> onRoll.run());
         leaveButton.addActionListener(event -> onLeave.run());
-        rollButton.setAlignmentX(JComponent.LEFT_ALIGNMENT);
-        leaveButton.setAlignmentX(JComponent.LEFT_ALIGNMENT);
+        pin(rollButton, 230, 46);
+        pin(leaveButton, 230, 46);
+        message.setRows(4);
+        pin(message, 230, 88);
+        pin(diceFace, 84, 84);
+        pin(timeLabel, 230, 32);
+        pin(playerRow, 230, 32);
 
         align(mode);
         align(turnLabel);
@@ -175,6 +183,19 @@ public final class GameScreen extends JPanel {
     }
 
     @Override
+    public void setVisible(boolean visible) {
+        super.setVisible(visible);
+        if (clock == null) {
+            return;
+        }
+        if (visible) {
+            clock.start();
+        } else {
+            clock.stop();
+        }
+    }
+
+    @Override
     public void removeNotify() {
         if (clock != null) {
             clock.stop();
@@ -199,5 +220,10 @@ public final class GameScreen extends JPanel {
 
     private static void align(JComponent component) {
         component.setAlignmentX(JComponent.LEFT_ALIGNMENT);
+    }
+
+    private static void pin(JComponent component, int width, int height) {
+        align(component);
+        component.setMaximumSize(new Dimension(width, height));
     }
 }

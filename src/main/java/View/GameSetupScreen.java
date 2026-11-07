@@ -53,7 +53,8 @@ public final class GameSetupScreen extends JPanel {
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBackground(UiKit.CARD);
         card.setBorder(new EmptyBorder(28, 32, 24, 32));
-        card.setPreferredSize(new Dimension(640, 560));
+        card.setPreferredSize(new Dimension(640, 420));
+        card.setMaximumSize(new Dimension(640, 640));
 
         JLabel title = new JLabel("Game Setup");
         title.setFont(new Font(Font.SERIF, Font.BOLD, 32));
@@ -68,6 +69,7 @@ public final class GameSetupScreen extends JPanel {
         JPanel countRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         countRow.setOpaque(false);
         countRow.setAlignmentX(LEFT_ALIGNMENT);
+        countRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         JLabel countLabel = new JLabel("Players");
         countLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
         countRow.add(countLabel);
@@ -79,6 +81,7 @@ public final class GameSetupScreen extends JPanel {
         playerRows.setLayout(new BoxLayout(playerRows, BoxLayout.Y_AXIS));
         playerRows.setOpaque(false);
         playerRows.setAlignmentX(LEFT_ALIGNMENT);
+        playerRows.setMaximumSize(new Dimension(Integer.MAX_VALUE, 220));
         for (int index = 0; index < 4; index++) {
             rows[index] = playerRow(index);
             playerRows.add(rows[index]);
@@ -88,6 +91,7 @@ public final class GameSetupScreen extends JPanel {
         errorLabel.setForeground(UiKit.DANGER);
         errorLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
         errorLabel.setAlignmentX(LEFT_ALIGNMENT);
+        errorLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 72));
 
         JButton back = UiKit.button("Back", Color.WHITE, UiKit.INK);
         JButton start = UiKit.button("Start Easy Game", UiKit.GOLD, UiKit.INK);
@@ -97,6 +101,7 @@ public final class GameSetupScreen extends JPanel {
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         actions.setOpaque(false);
         actions.setAlignmentX(LEFT_ALIGNMENT);
+        actions.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
         actions.add(back);
         actions.add(start);
 
@@ -111,6 +116,7 @@ public final class GameSetupScreen extends JPanel {
         card.add(errorLabel);
         card.add(Box.createVerticalStrut(12));
         card.add(actions);
+        card.add(Box.createVerticalGlue());
         add(card);
 
         playerCount.addActionListener(event -> showSelectedRows());
