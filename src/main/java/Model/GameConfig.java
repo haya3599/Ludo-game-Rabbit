@@ -1,6 +1,7 @@
 package Model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,7 +25,7 @@ public final class GameConfig {
     }
 
     public List<Slot> getSlots() {
-        return List.copyOf(slots);
+        return Collections.unmodifiableList(new ArrayList<>(slots));  
     }
 
     public int getPlayerCount() {

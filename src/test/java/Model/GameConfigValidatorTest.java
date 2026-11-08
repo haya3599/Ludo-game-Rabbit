@@ -48,6 +48,20 @@ class GameConfigValidatorTest {
         assertFalse(result.isValid());
         assertTrue(result.getMessage().contains("Red is selected more than once"));
     }
+    
+    @Test
+    void missingPlayerIsRejectedWithoutCrashing() {
+        List<GameConfig.Slot> slots = new ArrayList<>();
+        slots.add(new GameConfig.Slot("Tareza", PlayerColor.RED));
+        slots.add(null);
+
+        ValidationResult result =
+                GameConfigValidator.validate(new GameConfig(slots));
+
+        assertFalse(result.isValid());
+        assertTrue(result.getMessage().contains("Player 2 needs a name."));
+        assertTrue(result.getMessage().contains("Player 2 needs a color."));
+    }
 
     private static GameConfig config(int playerCount) {
         PlayerColor[] colors = PlayerColor.values();
