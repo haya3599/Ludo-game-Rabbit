@@ -224,33 +224,95 @@ public final class BoardPanel extends JPanel {
         }
     }
 
+    /** Four enamel triangles and a crowned gold medallion at the finish. */
     private void paintCenter(Graphics2D g2) {
-        int x = originX + 7 * cell;
-        int y = originY + 7 * cell;
-        int cx = x + cell / 2;
-        int cy = y + cell / 2;
-        Path2D gem = new Path2D.Double();
-        gem.moveTo(cx, y + 2);
-        gem.lineTo(x + cell - 2, cy);
-        gem.lineTo(cx, y + cell - 2);
-        gem.lineTo(x + 2, cy);
-        gem.closePath();
-        g2.setPaint(new GradientPaint(x, y, new Color(255, 231, 172),
-                x + cell, y + cell, new Color(172, 124, 56)));
-        g2.fill(gem);
-        g2.setColor(new Color(255, 248, 224));
-        g2.setStroke(new BasicStroke(Math.max(1f, cell * .04f)));
-        g2.draw(gem);
-        int r = Math.max(5, cell / 4);
-        g2.setColor(new Color(112, 77, 39));
-        g2.fillOval(cx-r, cy-r, 2*r, 2*r);
-        g2.setColor(new Color(244, 205, 130));
-        g2.setStroke(new BasicStroke(Math.max(1f, cell*.035f)));
-        g2.drawOval(cx-r, cy-r, 2*r, 2*r);
-        g2.setFont(new Font(Font.SERIF, Font.BOLD, Math.max(10, cell / 3)));
-        String star = "★";
-        int w = g2.getFontMetrics().stringWidth(star);
-        g2.drawString(star, cx-w/2, cy+g2.getFontMetrics().getAscent()/3);
+        // The full 3x3 central square (not only the single middle cell).
+        // BoardGeometry stays unchanged; this is purely a visual overlay.
+        int x = originX + 6 * cell;
+        int y = originY + 6 * cell;
+        int size = 3 * cell;
+        int cx = x + size / 2;
+        int cy = y + size / 2;
+
+        Graphics2D c = (Graphics2D) g2.create();
+        c.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        c.setColor(new Color(83, 53, 24, 65));
+        c.fillRect(x + 2, y + 3, size, size);
+
+        Color[] colors = {
+            royal(PlayerColor.GREEN), royal(PlayerColor.YELLOW),
+            royal(PlayerColor.BLUE), royal(PlayerColor.RED)
+        };
+        int[][] edges = {
+            {x, y, x + size, y},
+            {x + size, y, x + size, y + size},
+            {x + size, y + size, x, y + size},
+            {x, y + size, x, y}
+        };
+        for (int i = 0; i < 4; i++) {
+            Path2D triangle = new Path2D.Double();
+            triangle.moveTo(edges[i][0], edges[i][1]);
+            triangle.lineTo(edges[i][2], edges[i][3]);
+            triangle.lineTo(cx, cy);
+            triangle.closePath();
+            c.setPaint(new GradientPaint(edges[i][0], edges[i][1],
+                    mix(colors[i], Color.WHITE, .25), cx, cy,
+                    mix(colors[i], Color.BLACK, .25)));
+            c.fill(triangle);
+        }
+
+        float border = Math.max(1.5f, size * .012f);
+        c.setStroke(new BasicStroke(border));
+        c.setColor(new Color(248, 217, 144));
+        c.drawLine(x, y, x + size, y + size);
+        c.drawLine(x + size, y, x, y + size);
+        c.drawRect(x, y, size - 1, size - 1);
+
+        int radius = Math.max(12, (int) (size * .18));
+        c.setColor(new Color(45, 26, 17, 80));
+        c.fillOval(cx - radius + 2, cy - radius + 4, 2 * radius, 2 * radius);
+        c.setPaint(new GradientPaint(cx - radius, cy - radius,
+                new Color(255, 246, 199), cx + radius, cy + radius,
+                new Color(159, 103, 33)));
+        c.fillOval(cx - radius, cy - radius, 2 * radius, 2 * radius);
+        int inner = radius - Math.max(3, size / 30);
+        c.setPaint(new GradientPaint(cx - inner, cy - inner,
+                new Color(42, 41, 37), cx + inner, cy + inner,
+                new Color(11, 19, 22)));
+        c.fillOval(cx - inner, cy - inner, inner * 2, inner * 2);
+
+        Graphics2D crown = (Graphics2D) c.create();
+        crown.translate(cx, cy + size * .012);
+        crown.scale(size / 210.0, size / 210.0);
+        Path2D shape = new Path2D.Double();
+        shape.moveTo(-17, -7);
+        shape.lineTo(-20, -16);
+        shape.lineTo(-10, -11);
+        shape.lineTo(-6, -20);
+        shape.lineTo(0, -11);
+        shape.lineTo(6, -20);
+        shape.lineTo(10, -11);
+        shape.lineTo(20, -16);
+        shape.lineTo(17, -7);
+        shape.lineTo(14, 9);
+        shape.lineTo(-14, 9);
+        shape.closePath();
+        crown.setPaint(new GradientPaint(-14, -18, new Color(255, 246, 182),
+                16, 10, new Color(194, 127, 39)));
+        crown.fill(shape);
+        crown.setColor(new Color(255, 236, 158));
+        crown.setStroke(new BasicStroke(1.3f));
+        crown.draw(shape);
+        crown.setPaint(new GradientPaint(-15, 8, new Color(255, 241, 176),
+                15, 15, new Color(158, 98, 31)));
+        crown.fillRoundRect(-17, 7, 34, 7, 3, 3);
+        for (int jewelX : new int[]{-9, 0, 9}) {
+            crown.setColor(jewelX == 0 ? new Color(173, 40, 59)
+                    : new Color(32, 118, 117));
+            crown.fillOval(jewelX - 2, -3, 4, 4);
+        }
+        crown.dispose();
+        c.dispose();
     }
 
     private void paintPieces(Graphics2D g2) {
