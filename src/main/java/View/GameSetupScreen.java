@@ -1,223 +1,824 @@
+
 package View;
 
 import Model.GameConfig;
 import Model.PlayerColor;
 
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridBagLayout;
-import java.awt.RenderingHints;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Collects the player count, names, and colours for an Easy game.
- * Validation is performed by the controller before the game starts.
- */
 public final class GameSetupScreen extends JPanel {
 
-    private static final PlayerColor[] DEFAULT_COLORS = {
-            PlayerColor.RED, PlayerColor.BLUE, PlayerColor.GREEN, PlayerColor.YELLOW
+    private static final Color NAVY = new Color(24, 32, 72);
+    private static final Color IVORY = new Color(255, 250, 240);
+    private static final Color GOLD = new Color(211, 169, 83);
+    private static final Color SOFT_GOLD = new Color(245, 225, 178);
+    private static final Color MUTED = new Color(185, 190, 207);
+
+    private static final PlayerColor[] COLORS = {
+            PlayerColor.RED,
+            PlayerColor.BLUE,
+            PlayerColor.GREEN,
+            PlayerColor.YELLOW
     };
 
-    private final JComboBox<Integer> playerCount = new JComboBox<>(new Integer[]{2, 3, 4});
     private final JTextField[] nameFields = new JTextField[4];
-    private final JComboBox<PlayerColor>[] colorChoices = newColorChoices();
-    private final JPanel[] rows = new JPanel[4];
+    private final PlayerColor[] selectedColors = COLORS.clone();
+    private final JToggleButton[][] colorButtons =
+            new JToggleButton[4][4];
+    private final JPanel[] playerRows = new JPanel[4];
+    private final JButton[] countButtons = new JButton[3];
+
     private final JLabel errorLabel = new JLabel(" ");
-    private Runnable onBack = () -> { };
-    private Runnable onStart = () -> { };
+
+    private int playerCount = 2;
+    private Runnable onBack = () -> {};
+    private Runnable onStart = () -> {};
 
     public GameSetupScreen() {
         setLayout(new GridBagLayout());
-        setBackground(UiKit.NAVY);
+        setBackground(NAVY);
 
-        JPanel card = new JPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBackground(UiKit.CARD);
-        card.setBorder(new EmptyBorder(28, 32, 24, 32));
-        card.setPreferredSize(new Dimension(640, 420));
-        card.setMaximumSize(new Dimension(640, 640));
+        JPanel content = new JPanel();
+        content.setOpaque(false);
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
+        content.setBorder(new EmptyBorder(20, 15, 20, 15));
+        content.setPreferredSize(new Dimension(900, 740));
 
-        JLabel title = new JLabel("Game Setup");
-        title.setFont(new Font(Font.SERIF, Font.BOLD, 32));
-        title.setForeground(UiKit.NAVY);
+        // HEADER
+        JLabel edition = new JLabel(
+                "L U D O   /   T H E   R O Y A L   E D I T I O N"
+        );
+        edition.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        edition.setForeground(GOLD);
+        edition.setAlignmentX(LEFT_ALIGNMENT);
+
+        JLabel title = new JLabel("Prepare Your Game");
+        title.setFont(new Font("Georgia", Font.BOLD, 46));
+        title.setForeground(IVORY);
         title.setAlignmentX(LEFT_ALIGNMENT);
 
-        JLabel subtitle = new JLabel("Difficulty is fixed to Easy for this iteration.");
-        subtitle.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 14));
-        subtitle.setForeground(new Color(70, 74, 90));
+        JLabel subtitle = new JLabel(
+                "Choose your players, claim your colors, and let the game begin."
+        );
+        subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+        subtitle.setForeground(MUTED);
         subtitle.setAlignmentX(LEFT_ALIGNMENT);
 
-        JPanel countRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        content.add(edition);
+        content.add(Box.createVerticalStrut(13));
+        content.add(title);
+        content.add(Box.createVerticalStrut(8));
+        content.add(subtitle);
+        content.add(Box.createVerticalStrut(24));
+
+        JSeparator line = new JSeparator();
+        line.setForeground(new Color(91, 99, 131));
+        line.setMaximumSize(
+                new Dimension(Integer.MAX_VALUE, 1)
+        );
+        content.add(line);
+        content.add(Box.createVerticalStrut(25));
+
+        // DIFFICULTY
+        content.add(sectionLabel("01", "GAME MODE"));
+        content.add(Box.createVerticalStrut(15));
+
+        JPanel difficulty = new JPanel(
+                new GridLayout(1, 3, 14, 0)
+        );
+        difficulty.setOpaque(false);
+        difficulty.setAlignmentX(LEFT_ALIGNMENT);
+        difficulty.setMaximumSize(
+                new Dimension(Integer.MAX_VALUE, 52)
+        );
+
+        JButton easy = new RoyalButton(
+                "Easy  ✓",
+                SOFT_GOLD,
+                GOLD,
+                new Color(255, 237, 191)
+        );
+
+        JButton medium = new RoyalButton(
+                "Medium  ·  Soon",
+                new Color(48, 57, 91),
+                new Color(88, 95, 120),
+                new Color(48, 57, 91)
+        );
+
+        JButton hard = new RoyalButton(
+                "Hard  ·  Soon",
+                new Color(48, 57, 91),
+                new Color(88, 95, 120),
+                new Color(48, 57, 91)
+        );
+
+        medium.setEnabled(false);
+        hard.setEnabled(false);
+
+        difficulty.add(easy);
+        difficulty.add(medium);
+        difficulty.add(hard);
+
+        content.add(difficulty);
+        content.add(Box.createVerticalStrut(35));
+
+        // PLAYER COUNT
+        JPanel countRow = new JPanel(new BorderLayout());
         countRow.setOpaque(false);
         countRow.setAlignmentX(LEFT_ALIGNMENT);
-        countRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        JLabel countLabel = new JLabel("Players");
-        countLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
-        countRow.add(countLabel);
-        countRow.add(Box.createHorizontalStrut(12));
-        playerCount.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 14));
-        countRow.add(playerCount);
+        countRow.setMaximumSize(
+                new Dimension(Integer.MAX_VALUE, 43)
+        );
 
-        JPanel playerRows = new JPanel();
-        playerRows.setLayout(new BoxLayout(playerRows, BoxLayout.Y_AXIS));
-        playerRows.setOpaque(false);
-        playerRows.setAlignmentX(LEFT_ALIGNMENT);
-        playerRows.setMaximumSize(new Dimension(Integer.MAX_VALUE, 220));
-        for (int index = 0; index < 4; index++) {
-            rows[index] = playerRow(index);
-            playerRows.add(rows[index]);
-            playerRows.add(Box.createVerticalStrut(8));
+        countRow.add(
+                sectionLabel("02", "YOUR PLAYERS"),
+                BorderLayout.WEST
+        );
+
+        JPanel countOptions = new JPanel(
+                new FlowLayout(FlowLayout.RIGHT, 9, 0)
+        );
+        countOptions.setOpaque(false);
+
+        for (int i = 0; i < 3; i++) {
+            final int count = i + 2;
+
+            JButton button = new JButton(
+                    String.valueOf(count)
+            );
+
+            button.setFont(
+                    new Font("Segoe UI", Font.BOLD, 15)
+            );
+            button.setFocusPainted(false);
+            button.setOpaque(true);
+            button.setContentAreaFilled(true);
+            button.setCursor(
+                    Cursor.getPredefinedCursor(
+                            Cursor.HAND_CURSOR
+                    )
+            );
+            button.setPreferredSize(new Dimension(55, 39));
+
+            button.addActionListener(event -> {
+                playerCount = count;
+                refreshCountButtons();
+                refreshPlayerRows();
+            });
+
+            countButtons[i] = button;
+            countOptions.add(button);
         }
 
-        errorLabel.setForeground(UiKit.DANGER);
-        errorLabel.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 13));
-        errorLabel.setAlignmentX(LEFT_ALIGNMENT);
-        errorLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 72));
+        countRow.add(countOptions, BorderLayout.EAST);
+        content.add(countRow);
+        content.add(Box.createVerticalStrut(16));
 
-        JButton back = UiKit.button("Back", Color.WHITE, UiKit.INK);
-        JButton start = UiKit.button("Start Easy Game", UiKit.GOLD, UiKit.INK);
+        // PLAYER CARDS
+        JPanel playersContainer = new JPanel();
+        playersContainer.setOpaque(false);
+        playersContainer.setLayout(
+                new BoxLayout(
+                        playersContainer,
+                        BoxLayout.Y_AXIS
+                )
+        );
+        playersContainer.setAlignmentX(LEFT_ALIGNMENT);
+
+        for (int i = 0; i < 4; i++) {
+            playerRows[i] = createPlayerRow(i);
+            playersContainer.add(playerRows[i]);
+            playersContainer.add(Box.createVerticalStrut(11));
+        }
+
+        content.add(playersContainer);
+        content.add(Box.createVerticalStrut(12));
+
+        JLabel hint = new JLabel(
+                "Choose any color — selecting another player's color swaps them automatically."
+        );
+        hint.setFont(
+                new Font("Segoe UI", Font.PLAIN, 12)
+        );
+        hint.setForeground(MUTED);
+        hint.setAlignmentX(LEFT_ALIGNMENT);
+
+        content.add(hint);
+        content.add(Box.createVerticalStrut(12));
+
+        errorLabel.setForeground(
+                new Color(255, 166, 166)
+        );
+        errorLabel.setFont(
+                new Font("Segoe UI", Font.BOLD, 13)
+        );
+        errorLabel.setAlignmentX(LEFT_ALIGNMENT);
+        content.add(errorLabel);
+
+        content.add(Box.createVerticalGlue());
+
+        // ACTIONS
+        JPanel actions = new JPanel(
+                new FlowLayout(FlowLayout.RIGHT, 14, 0)
+        );
+        actions.setOpaque(false);
+        actions.setAlignmentX(LEFT_ALIGNMENT);
+        actions.setMaximumSize(
+                new Dimension(Integer.MAX_VALUE, 55)
+        );
+
+        JButton back = new RoyalButton(
+                "Back",
+                new Color(40, 49, 85),
+                new Color(108, 111, 137),
+                new Color(57, 66, 105)
+        );
+
+        JButton start = new RoyalButton(
+                "Start Game  →",
+                new Color(224, 178, 76),
+                new Color(181, 130, 40),
+                new Color(245, 199, 99)
+        );
+
+        back.setPreferredSize(new Dimension(150, 50));
+        start.setPreferredSize(new Dimension(250, 50));
+
+        back.setFont(
+                new Font("Segoe UI", Font.BOLD, 15)
+        );
+        start.setFont(
+                new Font("Segoe UI", Font.BOLD, 17)
+        );
+
         back.addActionListener(event -> onBack.run());
         start.addActionListener(event -> onStart.run());
 
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        actions.setOpaque(false);
-        actions.setAlignmentX(LEFT_ALIGNMENT);
-        actions.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
         actions.add(back);
         actions.add(start);
 
-        card.add(title);
-        card.add(Box.createVerticalStrut(4));
-        card.add(subtitle);
-        card.add(Box.createVerticalStrut(18));
-        card.add(countRow);
-        card.add(Box.createVerticalStrut(14));
-        card.add(playerRows);
-        card.add(Box.createVerticalStrut(8));
-        card.add(errorLabel);
-        card.add(Box.createVerticalStrut(12));
-        card.add(actions);
-        card.add(Box.createVerticalGlue());
-        add(card);
+        content.add(actions);
+        add(content);
 
-        playerCount.addActionListener(event -> showSelectedRows());
-        showSelectedRows();
+        refreshCountButtons();
+        refreshPlayerRows();
     }
 
-    public void setOnBack(Runnable onBack) {
-        this.onBack = onBack;
+    private JPanel sectionLabel(String number, String name) {
+        JPanel panel = new JPanel(
+                new FlowLayout(FlowLayout.LEFT, 10, 0)
+        );
+        panel.setOpaque(false);
+        panel.setAlignmentX(LEFT_ALIGNMENT);
+
+        JLabel numberLabel = new JLabel(number);
+        numberLabel.setForeground(GOLD);
+        numberLabel.setFont(
+                new Font("Georgia", Font.BOLD, 19)
+        );
+
+        JLabel nameLabel = new JLabel(name);
+        nameLabel.setForeground(IVORY);
+        nameLabel.setFont(
+                new Font("Segoe UI", Font.BOLD, 14)
+        );
+
+        panel.add(numberLabel);
+        panel.add(nameLabel);
+
+        return panel;
     }
 
-    public void setOnStart(Runnable onStart) {
-        this.onStart = onStart;
+    private JPanel createPlayerRow(int index) {
+        JPanel row = new RoundedPanel(
+                18,
+                new Color(255, 250, 240)
+        );
+
+        row.setLayout(new BorderLayout(18, 0));
+        row.setBorder(
+                new EmptyBorder(12, 18, 12, 18)
+        );
+        row.setMaximumSize(
+                new Dimension(Integer.MAX_VALUE, 72)
+        );
+        row.setPreferredSize(new Dimension(850, 72));
+        row.setAlignmentX(LEFT_ALIGNMENT);
+
+        JPanel identity = new JPanel(
+                new BorderLayout(12, 0)
+        );
+        identity.setOpaque(false);
+        identity.setPreferredSize(new Dimension(145, 42));
+
+        JLabel number = new JLabel(
+                String.format("%02d", index + 1)
+        );
+        number.setFont(
+                new Font("Georgia", Font.BOLD, 25)
+        );
+        number.setForeground(GOLD);
+
+        JLabel playerLabel = new JLabel(
+                "Player " + (index + 1)
+        );
+        playerLabel.setFont(
+                new Font("Segoe UI", Font.BOLD, 14)
+        );
+        playerLabel.setForeground(NAVY);
+
+        identity.add(number, BorderLayout.WEST);
+        identity.add(playerLabel, BorderLayout.CENTER);
+
+        nameFields[index] = new JTextField(
+                "Player " + (index + 1)
+        );
+
+        JTextField field = nameFields[index];
+        field.setFont(
+                new Font("Segoe UI", Font.PLAIN, 14)
+        );
+        field.setForeground(NAVY);
+        field.setBackground(Color.WHITE);
+        field.setBorder(
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(
+                                new Color(223, 211, 189)
+                        ),
+                        new EmptyBorder(7, 12, 7, 12)
+                )
+        );
+
+        row.add(identity, BorderLayout.WEST);
+        row.add(field, BorderLayout.CENTER);
+        row.add(
+                createColorPalette(index),
+                BorderLayout.EAST
+        );
+
+        return row;
+    }
+
+    private JPanel createColorPalette(int playerIndex) {
+        JPanel palette = new JPanel(
+                new FlowLayout(FlowLayout.CENTER, 8, 4)
+        );
+        palette.setOpaque(false);
+        palette.setPreferredSize(
+                new Dimension(190, 42)
+        );
+
+        ButtonGroup group = new ButtonGroup();
+
+        for (int i = 0; i < COLORS.length; i++) {
+            final PlayerColor color = COLORS[i];
+
+            JToggleButton button = new JToggleButton() {
+                @Override
+                protected void paintComponent(Graphics gr) {
+                    Graphics2D g = (Graphics2D) gr.create();
+
+                    g.setRenderingHint(
+                            RenderingHints.KEY_ANTIALIASING,
+                            RenderingHints.VALUE_ANTIALIAS_ON
+                    );
+
+                    int size = 25;
+                    int x = (getWidth() - size) / 2;
+                    int y = (getHeight() - size) / 2;
+
+                    Color actual = new Color(
+                            color.getRed(),
+                            color.getGreen(),
+                            color.getBlue()
+                    );
+
+                    if (getModel().isRollover()) {
+                        g.setColor(
+                                new Color(211, 169, 83, 55)
+                        );
+                        g.fillOval(
+                                x - 5, y - 5,
+                                size + 10, size + 10
+                        );
+                    }
+
+                    if (isSelected()) {
+                        g.setColor(GOLD);
+                        g.setStroke(new BasicStroke(2.2f));
+                        g.drawOval(
+                                x - 4, y - 4,
+                                size + 8, size + 8
+                        );
+                    }
+
+                    g.setColor(actual);
+                    g.fillOval(x, y, size, size);
+
+                    if (isSelected()) {
+                        g.setColor(Color.WHITE);
+                        g.setStroke(
+                                new BasicStroke(
+                                        2.3f,
+                                        BasicStroke.CAP_ROUND,
+                                        BasicStroke.JOIN_ROUND
+                                )
+                        );
+
+                        int cx = getWidth() / 2;
+                        int cy = getHeight() / 2;
+
+                        g.drawLine(
+                                cx - 6, cy,
+                                cx - 1, cy + 5
+                        );
+                        g.drawLine(
+                                cx - 1, cy + 5,
+                                cx + 7, cy - 5
+                        );
+                    }
+
+                    g.dispose();
+                }
+            };
+
+            button.setPreferredSize(
+                    new Dimension(37, 37)
+            );
+            button.setContentAreaFilled(false);
+            button.setBorderPainted(false);
+            button.setFocusPainted(false);
+            button.setOpaque(false);
+            button.setRolloverEnabled(true);
+            button.setCursor(
+                    Cursor.getPredefinedCursor(
+                            Cursor.HAND_CURSOR
+                    )
+            );
+            button.setToolTipText(
+                    color.getDisplayName()
+            );
+
+            button.addActionListener(event -> {
+                PlayerColor previous =
+                        selectedColors[playerIndex];
+
+                if (previous == color) {
+                    return;
+                }
+
+                // Swap colors with the current owner.
+                for (int other = 0;
+                     other < playerCount;
+                     other++) {
+
+                    if (other != playerIndex
+                            && selectedColors[other] == color) {
+                        selectedColors[other] = previous;
+                        break;
+                    }
+                }
+
+                selectedColors[playerIndex] = color;
+
+                refreshColorPalettes();
+                clearError();
+            });
+
+            colorButtons[playerIndex][i] = button;
+            group.add(button);
+            palette.add(button);
+        }
+
+        return palette;
+    }
+
+    private void refreshColorPalettes() {
+        for (int player = 0; player < 4; player++) {
+            for (int i = 0; i < COLORS.length; i++) {
+                JToggleButton button =
+                        colorButtons[player][i];
+
+                if (button != null) {
+                    button.setEnabled(true);
+                    button.setSelected(
+                            selectedColors[player] == COLORS[i]
+                    );
+                    button.repaint();
+                }
+            }
+        }
+    }
+
+    private void refreshPlayerRows() {
+        // Prevent duplicate colors when player count changes.
+        for (int i = 0; i < playerCount; i++) {
+            boolean duplicate = false;
+
+            for (int j = 0; j < i; j++) {
+                if (selectedColors[i] == selectedColors[j]) {
+                    duplicate = true;
+                    break;
+                }
+            }
+
+            if (duplicate) {
+                for (PlayerColor candidate : COLORS) {
+                    boolean used = false;
+
+                    for (int j = 0; j < i; j++) {
+                        if (selectedColors[j] == candidate) {
+                            used = true;
+                            break;
+                        }
+                    }
+
+                    if (!used) {
+                        selectedColors[i] = candidate;
+                        break;
+                    }
+                }
+            }
+        }
+
+        for (int i = 0; i < playerRows.length; i++) {
+            playerRows[i].setVisible(i < playerCount);
+        }
+
+        refreshColorPalettes();
+        clearError();
+        revalidate();
+        repaint();
+    }
+
+    private void refreshCountButtons() {
+        for (int i = 0; i < countButtons.length; i++) {
+            JButton button = countButtons[i];
+            boolean selected = i + 2 == playerCount;
+
+            button.setBackground(
+                    selected ? SOFT_GOLD : IVORY
+            );
+            button.setForeground(NAVY);
+            button.setBorder(
+                    BorderFactory.createLineBorder(
+                            selected
+                                    ? GOLD
+                                    : new Color(207, 197, 177),
+                            selected ? 2 : 1
+                    )
+            );
+        }
+    }
+
+    public void setOnBack(Runnable callback) {
+        onBack = callback == null
+                ? () -> {}
+                : callback;
+    }
+
+    public void setOnStart(Runnable callback) {
+        onStart = callback == null
+                ? () -> {}
+                : callback;
     }
 
     public GameConfig readConfig() {
-        int count = (Integer) playerCount.getSelectedItem();
-        List<GameConfig.Slot> slots = new ArrayList<>();
-        for (int index = 0; index < count; index++) {
-            slots.add(new GameConfig.Slot(
-                    nameFields[index].getText(),
-                    (PlayerColor) colorChoices[index].getSelectedItem()));
+        List<GameConfig.Slot> slots =
+                new ArrayList<>();
+
+        for (int i = 0; i < playerCount; i++) {
+            slots.add(
+                    new GameConfig.Slot(
+                            nameFields[i].getText(),
+                            selectedColors[i]
+                    )
+            );
         }
+
         return new GameConfig(slots);
     }
 
     public void showError(String message) {
-        errorLabel.setText("<html>" + message.replace("\n", "<br>") + "</html>");
+        errorLabel.setText(
+                "<html>" +
+                message.replace("\n", "<br>") +
+                "</html>"
+        );
     }
 
     public void clearError() {
         errorLabel.setText(" ");
     }
 
+    // FULL NAVY BACKGROUND + FOUR TRANSPARENT DICE
     @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
-        Graphics2D g2 = (Graphics2D) graphics.create();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setColor(new Color(245, 197, 66, 40));
-        g2.fillOval(-40, getHeight() - 180, 240, 240);
-        g2.setColor(new Color(46, 125, 50, 50));
-        g2.fillOval(getWidth() - 180, -40, 200, 200);
-        g2.dispose();
+
+        Graphics2D g = (Graphics2D) graphics.create();
+        g.setRenderingHint(
+                RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON
+        );
+
+        g.setColor(NAVY);
+        g.fillRect(
+                0, 0, getWidth(), getHeight()
+        );
+
+        int size = Math.max(
+                105,
+                Math.min(140, getWidth() / 11)
+        );
+
+        drawDie(
+                g,
+                getWidth() * 0.10,
+                getHeight() * 0.24,
+                size, -18, 5,
+                new Color(211, 47, 54)
+        );
+
+        drawDie(
+                g,
+                getWidth() * 0.90,
+                getHeight() * 0.24,
+                size, 17, 3,
+                new Color(43, 128, 225)
+        );
+
+        drawDie(
+                g,
+                getWidth() * 0.10,
+                getHeight() * 0.80,
+                size, 16, 2,
+                new Color(46, 157, 86)
+        );
+
+        drawDie(
+                g,
+                getWidth() * 0.90,
+                getHeight() * 0.80,
+                size, -16, 6,
+                new Color(246, 182, 42)
+        );
+
+        g.dispose();
     }
 
-    private void showSelectedRows() {
-        int count = (Integer) playerCount.getSelectedItem();
-        for (int index = 0; index < rows.length; index++) {
-            rows[index].setVisible(index < count);
+    private static void drawDie(
+            Graphics2D canvas,
+            double cx,
+            double cy,
+            int size,
+            double angle,
+            int value,
+            Color color
+    ) {
+        Graphics2D g = (Graphics2D) canvas.create();
+
+        g.translate(cx, cy);
+        g.rotate(Math.toRadians(angle));
+
+        g.setRenderingHint(
+                RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON
+        );
+
+        int half = size / 2;
+        int radius = size / 4;
+
+        // Transparent die face.
+        g.setColor(new Color(
+                color.getRed(),
+                color.getGreen(),
+                color.getBlue(),
+                35
+        ));
+
+        g.fillRoundRect(
+                -half, -half,
+                size, size,
+                radius, radius
+        );
+
+        // Fine colored outline.
+        g.setColor(new Color(
+                color.getRed(),
+                color.getGreen(),
+                color.getBlue(),
+                105
+        ));
+
+        g.setStroke(new BasicStroke(2.3f));
+        g.drawRoundRect(
+                -half, -half,
+                size, size,
+                radius, radius
+        );
+
+        int p = size / 4;
+        int dotRadius = Math.max(6, size / 15);
+
+        int[][] dots;
+
+        switch (value) {
+            case 2:
+                dots = new int[][]{
+                        {-p, -p}, {p, p}
+                };
+                break;
+
+            case 3:
+                dots = new int[][]{
+                        {-p, -p}, {0, 0}, {p, p}
+                };
+                break;
+
+            case 5:
+                dots = new int[][]{
+                        {-p, -p}, {p, -p},
+                        {0, 0},
+                        {-p, p}, {p, p}
+                };
+                break;
+
+            case 6:
+                dots = new int[][]{
+                        {-p, -p}, {-p, 0}, {-p, p},
+                        {p, -p}, {p, 0}, {p, p}
+                };
+                break;
+
+            default:
+                dots = new int[][]{{0, 0}};
         }
-        clearError();
-        revalidate();
-        repaint();
-    }
 
-    private JPanel playerRow(int index) {
-        JPanel row = new JPanel(new BorderLayout(10, 0));
-        row.setOpaque(false);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        JLabel label = new JLabel("Player " + (index + 1));
-        label.setPreferredSize(new Dimension(70, 32));
-        label.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+        g.setColor(new Color(
+                color.getRed(),
+                color.getGreen(),
+                color.getBlue(),
+                190
+        ));
 
-        nameFields[index] = new JTextField("Player " + (index + 1));
-        nameFields[index].setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 14));
-        nameFields[index].setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(210, 206, 196)),
-                new EmptyBorder(6, 8, 6, 8)));
-
-        colorChoices[index].setSelectedItem(DEFAULT_COLORS[index]);
-        colorChoices[index].setPreferredSize(new Dimension(140, 32));
-        row.add(label, BorderLayout.WEST);
-        row.add(nameFields[index], BorderLayout.CENTER);
-        row.add(colorChoices[index], BorderLayout.EAST);
-        return row;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static JComboBox<PlayerColor>[] newColorChoices() {
-        JComboBox<PlayerColor>[] choices = new JComboBox[4];
-        for (int index = 0; index < choices.length; index++) {
-            JComboBox<PlayerColor> combo = new JComboBox<>(PlayerColor.values());
-            combo.setRenderer(new ColorRenderer());
-            combo.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 14));
-            choices[index] = combo;
+        for (int[] dot : dots) {
+            g.fillOval(
+                    dot[0] - dotRadius,
+                    dot[1] - dotRadius,
+                    dotRadius * 2,
+                    dotRadius * 2
+            );
         }
-        return choices;
+
+        g.dispose();
     }
 
-    private static final class ColorRenderer extends DefaultListCellRenderer {
+    private static final class RoundedPanel extends JPanel {
+        private final int radius;
+        private final Color fill;
+
+        private RoundedPanel(int radius, Color fill) {
+            this.radius = radius;
+            this.fill = fill;
+            setOpaque(false);
+        }
+
         @Override
-        public Component getListCellRendererComponent(
-                JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-            JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            if (value instanceof PlayerColor color) {
-                label.setText(color.getDisplayName());
-                if (!isSelected) {
-                    label.setBackground(new Color(color.getRed(), color.getGreen(), color.getBlue(), 40));
-                }
-            }
-            return label;
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+
+            g.setRenderingHint(
+                    RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON
+            );
+
+            g.setColor(fill);
+            g.fillRoundRect(
+                    0, 0,
+                    getWidth() - 1,
+                    getHeight() - 1,
+                    radius, radius
+            );
+
+            g.setColor(
+                    new Color(212, 177, 109, 115)
+            );
+            g.setStroke(new BasicStroke(1.1f));
+            g.drawRoundRect(
+                    0, 0,
+                    getWidth() - 1,
+                    getHeight() - 1,
+                    radius, radius
+            );
+
+            g.dispose();
+            super.paintComponent(graphics);
         }
     }
 }
