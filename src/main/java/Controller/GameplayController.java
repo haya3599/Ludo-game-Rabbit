@@ -37,9 +37,15 @@ public final class GameplayController {
             screen.setMessage(result.getMessage());
             return;
         }
-        show("Turn passes to " + game.getCurrentPlayer().getName() + ".");
-    }
 
+        String playerName = game.getCurrentPlayer().getName();
+        if (game.getCurrentPlayer() == piece.getOwner()) {
+            show(playerName + " rolled a 6 and can roll again.");
+        } else {
+            show("Turn passes to " + playerName + ".");
+        }
+    }
+    
     private void show(String message) {
         screen.setTurnNumber(game.getTurnNumber());
         screen.setCurrentPlayer(game.getCurrentPlayer());

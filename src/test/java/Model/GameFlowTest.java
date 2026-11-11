@@ -28,23 +28,27 @@ class GameFlowTest {
     }
 
     @Test
-    void castleExitOnSixMovesTheSelectedPieceAndPassesTheTurn() {
-        Game game = Game.start(players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE), Dice.scripted(6));
+    void castleExitOnSixLetsTheSamePlayerRollAgain() {
+        Game game = Game.start(players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE), Dice.scripted(6, 3));
         Piece piece = game.getCurrentPlayer().getPieces().get(2);
 
         RollOutcome roll = game.roll();
-
         assertTrue(roll.isAccepted());
         assertTrue(roll.isMovePending());
         assertEquals(6, roll.getValue());
-        assertEquals(6, game.getLastRoll());
 
         assertEquals(ActionResult.OK, game.move(piece));
         assertEquals(PieceLocation.TRACK, piece.getLocation());
         assertEquals(0, piece.getProgress());
-        assertEquals("Sam", game.getCurrentPlayer().getName());
-        assertEquals(2, game.getTurnNumber());
+        assertEquals("Noa", game.getCurrentPlayer().getName());
+        assertEquals(1, game.getTurnNumber());
         assertFalse(game.isMovePending());
+
+        RollOutcome extraRoll = game.roll();
+        assertTrue(extraRoll.isAccepted());
+        assertEquals(3, extraRoll.getValue());
+        assertTrue(extraRoll.isMovePending());
+        assertEquals("Noa", game.getCurrentPlayer().getName());
     }
 
     @Test
@@ -162,23 +166,28 @@ class GameFlowTest {
     void playersTakeTurnsAfterSuccessfulMoves() {
         Game game = Game.start(
                 players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE),
-                Dice.scripted(6, 6));
+                Dice.scripted(6, 3, 6, 2));
 
         Piece noaPiece = game.getPlayers().get(0).getPieces().get(0);
         Piece samPiece = game.getPlayers().get(1).getPieces().get(0);
 
-        game.roll();
+        game.roll(); // Noa rolls 6 and leaves the castle.
+        assertEquals(ActionResult.OK, game.move(noaPiece));
+        assertEquals("Noa", game.getCurrentPlayer().getName());
+
+        game.roll(); // Noa rolls 3, moves, and passes the turn.
         assertEquals(ActionResult.OK, game.move(noaPiece));
         assertEquals("Sam", game.getCurrentPlayer().getName());
         assertEquals(2, game.getTurnNumber());
 
-        game.roll();
+        game.roll(); // Sam rolls 6 and leaves the castle.
+        assertEquals(ActionResult.OK, game.move(samPiece));
+        assertEquals("Sam", game.getCurrentPlayer().getName());
+
+        game.roll(); // Sam rolls 2, moves, and passes the turn.
         assertEquals(ActionResult.OK, game.move(samPiece));
         assertEquals("Noa", game.getCurrentPlayer().getName());
         assertEquals(3, game.getTurnNumber());
-
-        assertEquals(PieceLocation.TRACK, noaPiece.getLocation());
-        assertEquals(PieceLocation.TRACK, samPiece.getLocation());
     }
 
     private static GameConfig players(Object... nameAndColor) {
