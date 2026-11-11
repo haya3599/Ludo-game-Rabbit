@@ -45,7 +45,7 @@ public final class GameSetupScreen extends JPanel {
         JPanel content = new JPanel();
         content.setOpaque(false);
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBorder(new EmptyBorder(20, 15, 20, 15));
+        content.setBorder(new EmptyBorder(14, 15, 14, 15));
         content.setPreferredSize(new Dimension(900, 740));
 
         // HEADER
@@ -69,11 +69,11 @@ public final class GameSetupScreen extends JPanel {
         subtitle.setAlignmentX(LEFT_ALIGNMENT);
 
         content.add(edition);
-        content.add(Box.createVerticalStrut(13));
+        content.add(Box.createVerticalStrut(9));
         content.add(title);
         content.add(Box.createVerticalStrut(8));
         content.add(subtitle);
-        content.add(Box.createVerticalStrut(24));
+        content.add(Box.createVerticalStrut(9));
 
         JSeparator line = new JSeparator();
         line.setForeground(new Color(91, 99, 131));
@@ -81,11 +81,11 @@ public final class GameSetupScreen extends JPanel {
                 new Dimension(Integer.MAX_VALUE, 1)
         );
         content.add(line);
-        content.add(Box.createVerticalStrut(25));
+        content.add(Box.createVerticalStrut(9));
 
         // DIFFICULTY
         content.add(sectionLabel("01", "GAME MODE"));
-        content.add(Box.createVerticalStrut(15));
+        content.add(Box.createVerticalStrut(9));
 
         JPanel difficulty = new JPanel(
                 new GridLayout(1, 3, 14, 0)
@@ -93,8 +93,9 @@ public final class GameSetupScreen extends JPanel {
         difficulty.setOpaque(false);
         difficulty.setAlignmentX(LEFT_ALIGNMENT);
         difficulty.setMaximumSize(
-                new Dimension(Integer.MAX_VALUE, 52)
+                new Dimension(Integer.MAX_VALUE, 48)
         );
+        difficulty.setPreferredSize(new Dimension(850, 48));
 
         JButton easy = new RoyalButton(
                 "Easy  ✓",
@@ -125,15 +126,16 @@ public final class GameSetupScreen extends JPanel {
         difficulty.add(hard);
 
         content.add(difficulty);
-        content.add(Box.createVerticalStrut(35));
+        content.add(Box.createVerticalStrut(8));
 
         // PLAYER COUNT
         JPanel countRow = new JPanel(new BorderLayout());
         countRow.setOpaque(false);
         countRow.setAlignmentX(LEFT_ALIGNMENT);
         countRow.setMaximumSize(
-                new Dimension(Integer.MAX_VALUE, 43)
-        );
+        new Dimension(Integer.MAX_VALUE, 52)
+);
+countRow.setPreferredSize(new Dimension(850, 48));
 
         countRow.add(
                 sectionLabel("02", "YOUR PLAYERS"),
@@ -144,26 +146,28 @@ public final class GameSetupScreen extends JPanel {
                 new FlowLayout(FlowLayout.RIGHT, 9, 0)
         );
         countOptions.setOpaque(false);
+        countOptions.setPreferredSize(new Dimension(192, 44));
 
         for (int i = 0; i < 3; i++) {
             final int count = i + 2;
 
-            JButton button = new JButton(
-                    String.valueOf(count)
-            );
+            JButton button = new CountGlowButton(count);
 
             button.setFont(
                     new Font("Segoe UI", Font.BOLD, 15)
             );
             button.setFocusPainted(false);
-            button.setOpaque(true);
-            button.setContentAreaFilled(true);
+            button.setOpaque(false);
+            button.setContentAreaFilled(false);
+            button.setBorderPainted(false);
+            button.setRolloverEnabled(true);
             button.setCursor(
                     Cursor.getPredefinedCursor(
                             Cursor.HAND_CURSOR
                     )
             );
-            button.setPreferredSize(new Dimension(55, 39));
+            button.setPreferredSize(new Dimension(55, 42));
+            button.setMargin(new Insets(0, 0, 0, 0));
 
             button.addActionListener(event -> {
                 playerCount = count;
@@ -177,7 +181,7 @@ public final class GameSetupScreen extends JPanel {
 
         countRow.add(countOptions, BorderLayout.EAST);
         content.add(countRow);
-        content.add(Box.createVerticalStrut(16));
+        content.add(Box.createVerticalStrut(9));
 
         // PLAYER CARDS
         JPanel playersContainer = new JPanel();
@@ -193,11 +197,11 @@ public final class GameSetupScreen extends JPanel {
         for (int i = 0; i < 4; i++) {
             playerRows[i] = createPlayerRow(i);
             playersContainer.add(playerRows[i]);
-            playersContainer.add(Box.createVerticalStrut(11));
+            playersContainer.add(Box.createVerticalStrut(7));
         }
 
         content.add(playersContainer);
-        content.add(Box.createVerticalStrut(12));
+        content.add(Box.createVerticalStrut(8));
 
         JLabel hint = new JLabel(
                 "Choose any color — selecting another player's color swaps them automatically."
@@ -209,7 +213,7 @@ public final class GameSetupScreen extends JPanel {
         hint.setAlignmentX(LEFT_ALIGNMENT);
 
         content.add(hint);
-        content.add(Box.createVerticalStrut(12));
+        content.add(Box.createVerticalStrut(8));
 
         errorLabel.setForeground(
                 new Color(255, 166, 166)
@@ -220,7 +224,7 @@ public final class GameSetupScreen extends JPanel {
         errorLabel.setAlignmentX(LEFT_ALIGNMENT);
         content.add(errorLabel);
 
-        content.add(Box.createVerticalGlue());
+        content.add(Box.createVerticalStrut(8));
 
         // ACTIONS
         JPanel actions = new JPanel(
@@ -238,6 +242,7 @@ public final class GameSetupScreen extends JPanel {
                 new Color(108, 111, 137),
                 new Color(57, 66, 105)
         );
+        back.setForeground(IVORY);
 
         JButton start = new RoyalButton(
                 "Start Game  →",
@@ -263,7 +268,11 @@ public final class GameSetupScreen extends JPanel {
         actions.add(start);
 
         content.add(actions);
-        add(content);
+
+// Reserve enough space for every visible player and the action buttons.
+// Never force BoxLayout to compress the controls.
+
+add(content);
 
         refreshCountButtons();
         refreshPlayerRows();
@@ -275,6 +284,9 @@ public final class GameSetupScreen extends JPanel {
         );
         panel.setOpaque(false);
         panel.setAlignmentX(LEFT_ALIGNMENT);
+        // Prevent BoxLayout from stretching this heading into a tall blank area.
+        panel.setPreferredSize(new Dimension(850, 28));
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
 
         JLabel numberLabel = new JLabel(number);
         numberLabel.setForeground(GOLD);
@@ -295,19 +307,16 @@ public final class GameSetupScreen extends JPanel {
     }
 
     private JPanel createPlayerRow(int index) {
-        JPanel row = new RoundedPanel(
-                18,
-                new Color(255, 250, 240)
-        );
+        JPanel row = new GlassPanel();
 
         row.setLayout(new BorderLayout(18, 0));
         row.setBorder(
-                new EmptyBorder(12, 18, 12, 18)
+                new EmptyBorder(9, 18, 9, 18)
         );
         row.setMaximumSize(
-                new Dimension(Integer.MAX_VALUE, 72)
+                new Dimension(Integer.MAX_VALUE, 64)
         );
-        row.setPreferredSize(new Dimension(850, 72));
+        row.setPreferredSize(new Dimension(850, 64));
         row.setAlignmentX(LEFT_ALIGNMENT);
 
         JPanel identity = new JPanel(
@@ -330,29 +339,23 @@ public final class GameSetupScreen extends JPanel {
         playerLabel.setFont(
                 new Font("Segoe UI", Font.BOLD, 14)
         );
-        playerLabel.setForeground(NAVY);
+        playerLabel.setForeground(IVORY);
 
         identity.add(number, BorderLayout.WEST);
         identity.add(playerLabel, BorderLayout.CENTER);
 
-        nameFields[index] = new JTextField(
-                "Player " + (index + 1)
-        );
+        nameFields[index] = new LuxuryNameField("Player " + (index + 1));
 
         JTextField field = nameFields[index];
         field.setFont(
                 new Font("Segoe UI", Font.PLAIN, 14)
         );
-        field.setForeground(NAVY);
-        field.setBackground(Color.WHITE);
-        field.setBorder(
-                BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(
-                                new Color(223, 211, 189)
-                        ),
-                        new EmptyBorder(7, 12, 7, 12)
-                )
-        );
+        field.setForeground(IVORY);
+        field.setOpaque(false);
+        field.setCaretColor(SOFT_GOLD);
+        field.setSelectionColor(new Color(112, 85, 45));
+        field.setSelectedTextColor(IVORY);
+        field.setBorder(new EmptyBorder(7, 17, 7, 17));
 
         row.add(identity, BorderLayout.WEST);
         row.add(field, BorderLayout.CENTER);
@@ -550,6 +553,13 @@ public final class GameSetupScreen extends JPanel {
             playerRows[i].setVisible(i < playerCount);
         }
 
+        // Size the centered content according to the number of visible rows.
+        // This prevents the count buttons and footer from being clipped.
+        Container content = playerRows[0].getParent().getParent();
+        if (content instanceof JPanel) {
+            ((JPanel) content).setPreferredSize(
+                    new Dimension(900, 600 + (playerCount - 2) * 70));
+        }
         refreshColorPalettes();
         clearError();
         revalidate();
@@ -559,20 +569,8 @@ public final class GameSetupScreen extends JPanel {
     private void refreshCountButtons() {
         for (int i = 0; i < countButtons.length; i++) {
             JButton button = countButtons[i];
-            boolean selected = i + 2 == playerCount;
-
-            button.setBackground(
-                    selected ? SOFT_GOLD : IVORY
-            );
-            button.setForeground(NAVY);
-            button.setBorder(
-                    BorderFactory.createLineBorder(
-                            selected
-                                    ? GOLD
-                                    : new Color(207, 197, 177),
-                            selected ? 2 : 1
-                    )
-            );
+            button.setForeground(i + 2 == playerCount ? NAVY : IVORY);
+            button.repaint();
         }
     }
 
@@ -673,152 +671,202 @@ public final class GameSetupScreen extends JPanel {
     }
 
     private static void drawDie(
-            Graphics2D canvas,
-            double cx,
-            double cy,
-            int size,
-            double angle,
-            int value,
-            Color color
-    ) {
+            Graphics2D canvas, double cx, double cy, int size,
+            double angle, int value, Color color) {
         Graphics2D g = (Graphics2D) canvas.create();
-
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                RenderingHints.VALUE_ANTIALIAS_ON);
         g.translate(cx, cy);
         g.rotate(Math.toRadians(angle));
+
+        int face = (int) (size * 0.76);
+        int depth = Math.max(15, face / 5);
+        int x = -face / 2 - depth / 3;
+        int y = -face / 2 + depth / 3;
+
+        // The three visible faces make a softly lit 3D cube.
+        Polygon top = new Polygon(
+                new int[]{x, x + depth, x + face + depth, x + face},
+                new int[]{y, y - depth, y - depth, y}, 4);
+        Polygon right = new Polygon(
+                new int[]{x + face, x + face + depth,
+                        x + face + depth, x + face},
+                new int[]{y, y - depth, y + face - depth, y + face}, 4);
+
+        g.setColor(new Color(0, 0, 0, 45));
+        g.fillRoundRect(x + 11, y + 13, face + depth, face, 18, 18);
+
+        g.setColor(tint(color, 75, 135));
+        g.fillPolygon(top);
+        g.setColor(tint(color, -40, 125));
+        g.fillPolygon(right);
+        g.setPaint(new GradientPaint(x, y, tint(color, 45, 130),
+                x + face, y + face, tint(color, -15, 65)));
+        g.fillRoundRect(x, y, face, face, 17, 17);
+
+        g.setStroke(new BasicStroke(1.8f));
+        g.setColor(tint(color, 70, 180));
+        g.drawPolygon(top);
+        g.setColor(tint(color, -10, 170));
+        g.drawPolygon(right);
+        g.setColor(tint(color, 85, 195));
+        g.drawRoundRect(x, y, face, face, 17, 17);
+
+        int p = face / 4;
+        int r = Math.max(5, face / 15);
+        int[][] dots;
+        switch (value) {
+            case 2: dots = new int[][]{{-p, -p}, {p, p}}; break;
+            case 3: dots = new int[][]{{-p, -p}, {0, 0}, {p, p}}; break;
+            case 4: dots = new int[][]{{-p, -p}, {p, -p}, {-p, p}, {p, p}}; break;
+            case 5: dots = new int[][]{{-p, -p}, {p, -p}, {0, 0}, {-p, p}, {p, p}}; break;
+            case 6: dots = new int[][]{{-p, -p}, {-p, 0}, {-p, p},
+                    {p, -p}, {p, 0}, {p, p}}; break;
+            default: dots = new int[][]{{0, 0}};
+        }
+        g.setColor(new Color(255, 250, 240, 220));
+        for (int[] dot : dots) {
+            g.fillOval(x + face / 2 + dot[0] - r,
+                    y + face / 2 + dot[1] - r, r * 2, r * 2);
+        }
+        g.setColor(new Color(255, 255, 255, 55));
+        g.setStroke(new BasicStroke(1.4f));
+        g.drawLine(x + 16, y + 9, x + face - 20, y + 9);
+        g.dispose();
+    }
+
+    private static Color tint(Color base, int delta, int alpha) {
+        return new Color(
+                Math.max(0, Math.min(255, base.getRed() + delta)),
+                Math.max(0, Math.min(255, base.getGreen() + delta)),
+                Math.max(0, Math.min(255, base.getBlue() + delta)),
+                alpha);
+    }
+
+    /** Gold hover glow with a persistent gold selection. */
+    private final class CountGlowButton extends JButton {
+        private final int count;
+
+        private CountGlowButton(int count) {
+            super(String.valueOf(count));
+            this.count = count;
+            setOpaque(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setRolloverEnabled(true);
+            setBorder(new EmptyBorder(0, 0, 0, 0));
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            boolean selected = count == playerCount;
+            boolean hover = getModel().isRollover();
+            boolean active = selected || hover;
+            int w = getWidth(), h = getHeight();
+
+            if (active) {
+                for (int spread = 5; spread >= 2; spread--) {
+                    g.setColor(new Color(245, 197, 66, 17));
+                    g.fillRoundRect(spread - 1, spread - 1,
+                            w - 2 * (spread - 1), h - 2 * (spread - 1), 12, 12);
+                }
+            }
+            Color top = selected ? new Color(255, 224, 139)
+                    : hover ? new Color(109, 88, 56) : new Color(48, 57, 93);
+            Color bottom = selected ? new Color(231, 172, 53)
+                    : hover ? new Color(75, 64, 61) : new Color(37, 47, 82);
+            g.setPaint(new GradientPaint(0, 4, top, 0, h - 4, bottom));
+            g.fillRoundRect(5, 5, w - 10, h - 10, 9, 9);
+            g.setStroke(new BasicStroke(active ? 1.8f : 1f));
+            g.setColor(active ? new Color(255, 228, 150)
+                    : new Color(111, 117, 150));
+            g.drawRoundRect(5, 5, w - 11, h - 11, 9, 9);
+            g.dispose();
+            setForeground(selected ? NAVY : IVORY);
+            super.paintComponent(graphics);
+        }
+    }
+
+    /** Rounded glass name editor with a gold focus halo. */
+    private static final class LuxuryNameField extends JTextField {
+        private LuxuryNameField(String value) {
+            super(value);
+            setOpaque(false);
+            addFocusListener(new java.awt.event.FocusAdapter() {
+                @Override
+                public void focusGained(java.awt.event.FocusEvent event) {
+                    repaint();
+                }
+
+                @Override
+                public void focusLost(java.awt.event.FocusEvent event) {
+                    repaint();
+                }
+            });
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            int w = getWidth(), h = getHeight();
+            boolean focused = hasFocus();
+            if (focused) {
+                g.setColor(new Color(245, 197, 66, 28));
+                g.fillRoundRect(0, 0, w, h, 19, 19);
+            }
+            g.setPaint(new GradientPaint(0, 2,
+                    new Color(54, 64, 105), 0, h,
+                    new Color(31, 40, 76)));
+            g.fillRoundRect(3, 3, w - 6, h - 6, 15, 15);
+            g.setColor(focused ? new Color(255, 215, 122)
+                    : new Color(180, 149, 91, 135));
+            g.setStroke(new BasicStroke(focused ? 1.8f : 1f));
+            g.drawRoundRect(3, 3, w - 7, h - 7, 15, 15);
+            g.setColor(new Color(255, 255, 255, 34));
+            g.drawLine(16, 5, Math.max(16, w - 18), 5);
+            g.dispose();
+            super.paintComponent(graphics);
+        }
+    }
+
+    private static final class GlassPanel extends JPanel {
+
+    private GlassPanel() {
+        setOpaque(false);
+    }
+
+    @Override
+    protected void paintComponent(Graphics graphics) {
+        Graphics2D g = (Graphics2D) graphics.create();
 
         g.setRenderingHint(
                 RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON
         );
 
-        int half = size / 2;
-        int radius = size / 4;
+        int width = getWidth() - 1;
+        int height = getHeight() - 1;
 
-        // Transparent die face.
-        g.setColor(new Color(
-                color.getRed(),
-                color.getGreen(),
-                color.getBlue(),
-                35
-        ));
-
-        g.fillRoundRect(
-                -half, -half,
-                size, size,
-                radius, radius
+        GradientPaint glass = new GradientPaint(
+                0, 0, new Color(255, 255, 255, 43),
+                width, height, new Color(255, 255, 255, 13)
         );
 
-        // Fine colored outline.
-        g.setColor(new Color(
-                color.getRed(),
-                color.getGreen(),
-                color.getBlue(),
-                105
-        ));
+        g.setPaint(glass);
+        g.fillRoundRect(0, 0, width, height, 20, 20);
 
-        g.setStroke(new BasicStroke(2.3f));
-        g.drawRoundRect(
-                -half, -half,
-                size, size,
-                radius, radius
-        );
-
-        int p = size / 4;
-        int dotRadius = Math.max(6, size / 15);
-
-        int[][] dots;
-
-        switch (value) {
-            case 2:
-                dots = new int[][]{
-                        {-p, -p}, {p, p}
-                };
-                break;
-
-            case 3:
-                dots = new int[][]{
-                        {-p, -p}, {0, 0}, {p, p}
-                };
-                break;
-
-            case 5:
-                dots = new int[][]{
-                        {-p, -p}, {p, -p},
-                        {0, 0},
-                        {-p, p}, {p, p}
-                };
-                break;
-
-            case 6:
-                dots = new int[][]{
-                        {-p, -p}, {-p, 0}, {-p, p},
-                        {p, -p}, {p, 0}, {p, p}
-                };
-                break;
-
-            default:
-                dots = new int[][]{{0, 0}};
-        }
-
-        g.setColor(new Color(
-                color.getRed(),
-                color.getGreen(),
-                color.getBlue(),
-                190
-        ));
-
-        for (int[] dot : dots) {
-            g.fillOval(
-                    dot[0] - dotRadius,
-                    dot[1] - dotRadius,
-                    dotRadius * 2,
-                    dotRadius * 2
-            );
-        }
+        g.setColor(new Color(245, 225, 178, 95));
+        g.setStroke(new BasicStroke(1.2f));
+        g.drawRoundRect(0, 0, width, height, 20, 20);
 
         g.dispose();
+        super.paintComponent(graphics);
     }
-
-    private static final class RoundedPanel extends JPanel {
-        private final int radius;
-        private final Color fill;
-
-        private RoundedPanel(int radius, Color fill) {
-            this.radius = radius;
-            this.fill = fill;
-            setOpaque(false);
-        }
-
-        @Override
-        protected void paintComponent(Graphics graphics) {
-            Graphics2D g = (Graphics2D) graphics.create();
-
-            g.setRenderingHint(
-                    RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON
-            );
-
-            g.setColor(fill);
-            g.fillRoundRect(
-                    0, 0,
-                    getWidth() - 1,
-                    getHeight() - 1,
-                    radius, radius
-            );
-
-            g.setColor(
-                    new Color(212, 177, 109, 115)
-            );
-            g.setStroke(new BasicStroke(1.1f));
-            g.drawRoundRect(
-                    0, 0,
-                    getWidth() - 1,
-                    getHeight() - 1,
-                    radius, radius
-            );
-
-            g.dispose();
-            super.paintComponent(graphics);
-        }
-    }
+}
 }
