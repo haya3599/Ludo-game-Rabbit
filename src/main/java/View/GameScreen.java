@@ -30,6 +30,7 @@ public final class GameScreen extends JPanel {
     private final JLabel turnLabel = new JLabel("Turn 1");
     private final JPanel colorChip = new JPanel();
     private final JLabel playerLabel = new JLabel(" ");
+    private Player displayedPlayer;
     private final JLabel diceCaption = new JLabel("Latest roll");
     private final DiceFacePanel diceFace = new DiceFacePanel();
     private final JLabel timeLabel = new JLabel("00:00");
@@ -143,11 +144,21 @@ public final class GameScreen extends JPanel {
     }
 
     public void setCurrentPlayer(Player player) {
-        playerLabel.setText(player.getName());
-        PlayerColor color = player.getColor();
-        colorChip.setBackground(new Color(color.getRed(), color.getGreen(), color.getBlue()));
-        colorChip.setToolTipText(color.getDisplayName());
+    if (displayedPlayer != player) {
+        setDiceValue(0);
+        displayedPlayer = player;
     }
+
+    playerLabel.setText(player.getName());
+
+    PlayerColor color = player.getColor();
+    colorChip.setBackground(new Color(
+        color.getRed(),
+        color.getGreen(),
+        color.getBlue()
+    ));
+    colorChip.setToolTipText(color.getDisplayName());
+}
 
     public void setDiceValue(int diceValue) {
         diceFace.setValue(diceValue);
