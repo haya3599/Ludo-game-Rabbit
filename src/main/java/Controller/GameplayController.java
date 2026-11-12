@@ -78,14 +78,54 @@ public final class GameplayController {
             return;
         }
 
-        String playerName = game.getCurrentPlayer().getName();
-        if (game.getCurrentPlayer() == piece.getOwner()) {
-            show(playerName + " rolled a 6 and can roll again.");
+        if (game.getTurnNumber() != previousTurn) {
+            delayTransition(
+                previousPlayer,
+                previousTurn,
+                previousRoll,
+                "Turn completed."
+            );
         } else {
-            show("Turn passes to " + playerName + ".");
+            show("Continue playing.");
         }
     }
-    
+
+    private void delayTransition(
+            Player previousPlayer,
+            int previousTurn,
+            int diceValue,
+            String message) {
+
+        transitioning = true;
+
+        if (transitionTimer != null) {
+            transitionTimer.stop();
+        }
+
+        // Keep the previous player and dice visible together.
+        screen.setTurnNumber(previousTurn);
+        screen.setCurrentPlayer(previousPlayer);
+        screen.setDiceValue(diceValue);
+        screen.setMessage(message);
+
+        screen.setRollEnabled(false);
+        screen.setHighlights(List.of());
+        screen.refreshBoard();
+
+        transitionTimer = new Timer(1000, event -> {
+            transitionTimer = null;
+
+            // Update player, turn and dice together.
+            displayedTurnNumber = -1;
+            show("Roll the dice.");
+
+            transitioning = false;
+        });
+
+        transitionTimer.setRepeats(false);
+        transitionTimer.start();
+    }
+
     private void show(String message) {
         int currentTurn = game.getTurnNumber();
 
