@@ -46,14 +46,14 @@ public final class GameSetupScreen extends JPanel {
     private Runnable onStart = () -> {};
 
     public GameSetupScreen() {
-        setLayout(new GridBagLayout());
+        setLayout(new BorderLayout());
         setBackground(NAVY);
 
         JPanel content = new JPanel();
         content.setOpaque(false);
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
         content.setBorder(new EmptyBorder(22, 15, 14, 15));
-        content.setPreferredSize(new Dimension(900, 740));
+        content.setPreferredSize(new Dimension(900, 730));
 
         // HEADER
         JLabel edition = new JLabel(
@@ -205,9 +205,14 @@ countRow.setPreferredSize(new Dimension(850, 48));
         for (int i = 0; i < 4; i++) {
             playerRows[i] = createPlayerRow(i);
             playersContainer.add(playerRows[i]);
-            playersContainer.add(Box.createVerticalStrut(7));
+            playersContainer.add(Box.createVerticalStrut(5));
         }
 
+        // Reserve the full four-player area even when only two are visible.
+        // This keeps all headings and action buttons in stable positions.
+        playersContainer.setPreferredSize(new Dimension(850, 260));
+        playersContainer.setMinimumSize(new Dimension(0, 260));
+        playersContainer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 260));
         content.add(playersContainer);
         content.add(Box.createVerticalStrut(8));
 
@@ -232,7 +237,7 @@ countRow.setPreferredSize(new Dimension(850, 48));
         errorLabel.setAlignmentX(LEFT_ALIGNMENT);
         content.add(errorLabel);
 
-        content.add(Box.createVerticalStrut(8));
+        content.add(Box.createVerticalStrut(3));
 
         // ACTIONS
         JPanel actions = new JPanel(
@@ -279,16 +284,19 @@ countRow.setPreferredSize(new Dimension(850, 48));
 
         content.add(actions);
 
-// Reserve enough space for every visible player and the action buttons.
-// Never force BoxLayout to compress the controls.
-
-// A real two-column layout reserves space for the mascot instead of
-// guessing the remaining margin from the window width.
+        // Anchor the setup below the fixed TEAM RABBIT branding.
+        // Unlike GridBagLayout, BorderLayout.NORTH never vertically recenters
+        // the header when the number of visible player rows changes.
         JPanel stage = new JPanel(new BorderLayout(8, 0));
         stage.setOpaque(false);
         stage.add(content, BorderLayout.CENTER);
         stage.add(new RoyalRabbitSidePanel(), BorderLayout.EAST);
-        add(stage);
+
+        JPanel anchoredLayout = new JPanel(new BorderLayout());
+        anchoredLayout.setOpaque(false);
+        anchoredLayout.setBorder(new EmptyBorder(48, 110, 0, 65));
+        anchoredLayout.add(stage, BorderLayout.NORTH);
+        add(anchoredLayout, BorderLayout.CENTER);
 
         refreshCountButtons();
         refreshPlayerRows();
@@ -330,9 +338,9 @@ countRow.setPreferredSize(new Dimension(850, 48));
                 new EmptyBorder(9, 18, 9, 18)
         );
         row.setMaximumSize(
-                new Dimension(Integer.MAX_VALUE, 64)
+                new Dimension(Integer.MAX_VALUE, 60)
         );
-        row.setPreferredSize(new Dimension(850, 64));
+        row.setPreferredSize(new Dimension(850, 60));
         row.setAlignmentX(LEFT_ALIGNMENT);
 
         JPanel identity = new JPanel(
@@ -569,13 +577,8 @@ countRow.setPreferredSize(new Dimension(850, 48));
             playerRows[i].setVisible(i < playerCount);
         }
 
-        // Size the centered content according to the number of visible rows.
-        // This prevents the count buttons and footer from being clipped.
-        Container content = playerRows[0].getParent().getParent();
-        if (content instanceof JPanel) {
-            ((JPanel) content).setPreferredSize(
-                    new Dimension(900, 600 + (playerCount - 2) * 70));
-        }
+        // The reserved player area keeps the header and footer stable
+        // when switching between 2, 3, and 4 players.
         refreshColorPalettes();
         clearError();
         revalidate();
