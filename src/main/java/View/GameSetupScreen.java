@@ -6,17 +6,21 @@ import Model.PlayerColor;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.imageio.ImageIO;
+import java.awt.geom.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class GameSetupScreen extends JPanel {
 
-    private static final Color NAVY = new Color(24, 32, 72);
-    private static final Color IVORY = new Color(255, 250, 240);
-    private static final Color GOLD = new Color(211, 169, 83);
-    private static final Color SOFT_GOLD = new Color(245, 225, 178);
-    private static final Color MUTED = new Color(185, 190, 207);
+    private static final Color NAVY = new Color(29, 13, 52);
+    private static final Color IVORY = new Color(255, 243, 207);
+    private static final Color GOLD = new Color(236, 187, 91);
+    private static final Color SOFT_GOLD = new Color(255, 224, 151);
+    private static final Color MUTED = new Color(218, 197, 218);
 
     private static final PlayerColor[] COLORS = {
             PlayerColor.RED,
@@ -24,6 +28,9 @@ public final class GameSetupScreen extends JPanel {
             PlayerColor.GREEN,
             PlayerColor.YELLOW
     };
+
+    private static final BufferedImage RABBIT_LOGO = loadBrandImage("rabbit_logo.png");
+    private static final BufferedImage ROYAL_RABBIT = loadBrandImage("royal_rabbit.png");
 
     private final JTextField[] nameFields = new JTextField[4];
     private final PlayerColor[] selectedColors = COLORS.clone();
@@ -45,20 +52,20 @@ public final class GameSetupScreen extends JPanel {
         JPanel content = new JPanel();
         content.setOpaque(false);
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBorder(new EmptyBorder(14, 15, 14, 15));
+        content.setBorder(new EmptyBorder(22, 15, 14, 15));
         content.setPreferredSize(new Dimension(900, 740));
 
         // HEADER
         JLabel edition = new JLabel(
-                "L U D O   /   T H E   R O Y A L   E D I T I O N"
+                "L U D O   A C A D E M Y   /   R O Y A L   E D I T I O N"
         );
         edition.setFont(new Font("Segoe UI", Font.BOLD, 13));
         edition.setForeground(GOLD);
         edition.setAlignmentX(LEFT_ALIGNMENT);
 
-        JLabel title = new JLabel("Prepare Your Game");
-        title.setFont(new Font("Georgia", Font.BOLD, 46));
-        title.setForeground(IVORY);
+        JLabel title = new RoyalTitleLabel("PREPARE YOUR GAME");
+        title.setFont(new Font("Georgia", Font.BOLD, 43));
+        title.setForeground(SOFT_GOLD);
         title.setAlignmentX(LEFT_ALIGNMENT);
 
         JLabel subtitle = new JLabel(
@@ -76,7 +83,7 @@ public final class GameSetupScreen extends JPanel {
         content.add(Box.createVerticalStrut(9));
 
         JSeparator line = new JSeparator();
-        line.setForeground(new Color(91, 99, 131));
+        line.setForeground(new Color(236, 187, 91, 150));
         line.setMaximumSize(
                 new Dimension(Integer.MAX_VALUE, 1)
         );
@@ -98,7 +105,7 @@ public final class GameSetupScreen extends JPanel {
         difficulty.setPreferredSize(new Dimension(850, 48));
 
         JButton easy = new RoyalButton(
-                "Easy  ✓",
+                "Easy",
                 SOFT_GOLD,
                 GOLD,
                 new Color(255, 237, 191)
@@ -106,21 +113,22 @@ public final class GameSetupScreen extends JPanel {
 
         JButton medium = new RoyalButton(
                 "Medium  ·  Soon",
-                new Color(48, 57, 91),
-                new Color(88, 95, 120),
-                new Color(48, 57, 91)
+                new Color(62, 33, 86),
+                new Color(169, 118, 80),
+                new Color(62, 33, 86)
         );
 
         JButton hard = new RoyalButton(
                 "Hard  ·  Soon",
-                new Color(48, 57, 91),
-                new Color(88, 95, 120),
-                new Color(48, 57, 91)
+                new Color(62, 33, 86),
+                new Color(169, 118, 80),
+                new Color(62, 33, 86)
         );
 
         medium.setEnabled(false);
         hard.setEnabled(false);
 
+        easy.setForeground(new Color(42, 21, 62));
         difficulty.add(easy);
         difficulty.add(medium);
         difficulty.add(hard);
@@ -238,9 +246,9 @@ countRow.setPreferredSize(new Dimension(850, 48));
 
         JButton back = new RoyalButton(
                 "Back",
-                new Color(40, 49, 85),
-                new Color(108, 111, 137),
-                new Color(57, 66, 105)
+                new Color(60, 33, 82),
+                new Color(236, 187, 91),
+                new Color(35, 19, 61)
         );
         back.setForeground(IVORY);
 
@@ -260,6 +268,8 @@ countRow.setPreferredSize(new Dimension(850, 48));
         start.setFont(
                 new Font("Segoe UI", Font.BOLD, 17)
         );
+        // Dark ink on the light-gold primary action, for strong contrast.
+        start.setForeground(new Color(42, 21, 62));
 
         back.addActionListener(event -> onBack.run());
         start.addActionListener(event -> onStart.run());
@@ -272,7 +282,13 @@ countRow.setPreferredSize(new Dimension(850, 48));
 // Reserve enough space for every visible player and the action buttons.
 // Never force BoxLayout to compress the controls.
 
-add(content);
+// A real two-column layout reserves space for the mascot instead of
+// guessing the remaining margin from the window width.
+        JPanel stage = new JPanel(new BorderLayout(8, 0));
+        stage.setOpaque(false);
+        stage.add(content, BorderLayout.CENTER);
+        stage.add(new RoyalRabbitSidePanel(), BorderLayout.EAST);
+        add(stage);
 
         refreshCountButtons();
         refreshPlayerRows();
@@ -614,133 +630,217 @@ add(content);
         errorLabel.setText(" ");
     }
 
-    // FULL NAVY BACKGROUND + FOUR TRANSPARENT DICE
+    // The same purple-and-gold royal atmosphere used by HomeScreen.
     @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
-
         Graphics2D g = (Graphics2D) graphics.create();
-        g.setRenderingHint(
-                RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON
-        );
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        int w = getWidth(), h = getHeight();
+        g.setPaint(new GradientPaint(0, 0, new Color(18, 7, 36),
+                w, h, new Color(57, 21, 78)));
+        g.fillRect(0, 0, w, h);
+        g.setPaint(new RadialGradientPaint(new Point2D.Double(w * .51, h * .34),
+                Math.max(1, (float)(Math.max(w, h) * .55)),
+                new float[]{0f, 1f},
+                new Color[]{new Color(124, 58, 150, 88), new Color(36, 13, 64, 0)}));
+        g.fillRect(0, 0, w, h);
 
-        g.setColor(NAVY);
-        g.fillRect(
-                0, 0, getWidth(), getHeight()
-        );
-
-        int size = Math.max(
-                105,
-                Math.min(140, getWidth() / 11)
-        );
-
-        drawDie(
-                g,
-                getWidth() * 0.10,
-                getHeight() * 0.24,
-                size, -18, 5,
-                new Color(211, 47, 54)
-        );
-
-        drawDie(
-                g,
-                getWidth() * 0.90,
-                getHeight() * 0.24,
-                size, 17, 3,
-                new Color(43, 128, 225)
-        );
-
-        drawDie(
-                g,
-                getWidth() * 0.10,
-                getHeight() * 0.80,
-                size, 16, 2,
-                new Color(46, 157, 86)
-        );
-
-        drawDie(
-                g,
-                getWidth() * 0.90,
-                getHeight() * 0.80,
-                size, -16, 6,
-                new Color(246, 182, 42)
-        );
-
-        g.dispose();
-    }
-
-    private static void drawDie(
-            Graphics2D canvas, double cx, double cy, int size,
-            double angle, int value, Color color) {
-        Graphics2D g = (Graphics2D) canvas.create();
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON);
-        g.translate(cx, cy);
-        g.rotate(Math.toRadians(angle));
-
-        int face = (int) (size * 0.76);
-        int depth = Math.max(15, face / 5);
-        int x = -face / 2 - depth / 3;
-        int y = -face / 2 + depth / 3;
-
-        // The three visible faces make a softly lit 3D cube.
-        Polygon top = new Polygon(
-                new int[]{x, x + depth, x + face + depth, x + face},
-                new int[]{y, y - depth, y - depth, y}, 4);
-        Polygon right = new Polygon(
-                new int[]{x + face, x + face + depth,
-                        x + face + depth, x + face},
-                new int[]{y, y - depth, y + face - depth, y + face}, 4);
-
-        g.setColor(new Color(0, 0, 0, 45));
-        g.fillRoundRect(x + 11, y + 13, face + depth, face, 18, 18);
-
-        g.setColor(tint(color, 75, 135));
-        g.fillPolygon(top);
-        g.setColor(tint(color, -40, 125));
-        g.fillPolygon(right);
-        g.setPaint(new GradientPaint(x, y, tint(color, 45, 130),
-                x + face, y + face, tint(color, -15, 65)));
-        g.fillRoundRect(x, y, face, face, 17, 17);
-
+        // Soft silk ribbons and fine gold strokes: deliberately behind real controls.
+        Path2D silk = new Path2D.Double();
+        silk.moveTo(-30, h * .20);
+        silk.curveTo(w * .13, -30, w * .23, h * .12, w * .37, -25);
+        g.setStroke(new BasicStroke(31f));
+        g.setColor(new Color(169, 77, 183, 30));
+        g.draw(silk);
         g.setStroke(new BasicStroke(1.8f));
-        g.setColor(tint(color, 70, 180));
-        g.drawPolygon(top);
-        g.setColor(tint(color, -10, 170));
-        g.drawPolygon(right);
-        g.setColor(tint(color, 85, 195));
-        g.drawRoundRect(x, y, face, face, 17, 17);
+        g.setColor(new Color(242, 176, 110, 77));
+        g.draw(silk);
+        Path2D right = new Path2D.Double();
+        right.moveTo(w + 22, h * .10);
+        right.curveTo(w * .90, h * .23, w * 1.03, h * .38, w * .94, h * .51);
+        g.setStroke(new BasicStroke(2.0f));
+        g.setColor(new Color(240, 185, 100, 80));
+        g.draw(right);
 
-        int p = face / 4;
-        int r = Math.max(5, face / 15);
-        int[][] dots;
-        switch (value) {
-            case 2: dots = new int[][]{{-p, -p}, {p, p}}; break;
-            case 3: dots = new int[][]{{-p, -p}, {0, 0}, {p, p}}; break;
-            case 4: dots = new int[][]{{-p, -p}, {p, -p}, {-p, p}, {p, p}}; break;
-            case 5: dots = new int[][]{{-p, -p}, {p, -p}, {0, 0}, {-p, p}, {p, p}}; break;
-            case 6: dots = new int[][]{{-p, -p}, {-p, 0}, {-p, p},
-                    {p, -p}, {p, 0}, {p, p}}; break;
-            default: dots = new int[][]{{0, 0}};
+        // TEAM RABBIT branding, with an uncropped proportional PNG.
+        if (RABBIT_LOGO != null) {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            int boxW = 63, boxH = 63;
+            double ratio = Math.min(boxW / (double)RABBIT_LOGO.getWidth(),
+                    boxH / (double)RABBIT_LOGO.getHeight());
+            int iw = (int)Math.round(RABBIT_LOGO.getWidth() * ratio);
+            int ih = (int)Math.round(RABBIT_LOGO.getHeight() * ratio);
+            g.drawImage(RABBIT_LOGO, 25 + (boxW - iw)/2, 15 + (boxH - ih)/2,
+                    iw, ih, null);
+        } else {
+            g.setColor(new Color(255, 224, 151));
+            g.setFont(new Font("Georgia", Font.BOLD, 28));
+            g.drawString("♛", 43, 58);
         }
-        g.setColor(new Color(255, 250, 240, 220));
-        for (int[] dot : dots) {
-            g.fillOval(x + face / 2 + dot[0] - r,
-                    y + face / 2 + dot[1] - r, r * 2, r * 2);
+        g.setFont(new Font("Georgia", Font.BOLD, 16));
+        g.setColor(SOFT_GOLD);
+        g.drawString("TEAM RABBIT", 98, 45);
+        g.setStroke(new BasicStroke(3.4f));
+        g.setColor(new Color(255, 193, 85, 45));
+        g.drawLine(98, 56, 267, 56);
+        g.setStroke(new BasicStroke(1.0f));
+        g.setColor(new Color(255, 222, 151, 210));
+        g.drawLine(98, 56, 267, 56);
+        sparkle(g, 273, 56, 6);
+
+        // Delicate side ornaments instead of four large, distracting dice.
+        for (int i = 0; i < 11; i++) {
+            double a = i * 2.39996;
+            int x = (int)(w * .11 + 105 * Math.cos(a));
+            int y = (int)(h * .57 + 205 * Math.sin(a));
+            sparkle(g, x, y, i % 4 == 0 ? 5 : 2);
+            int xr = (int)(w * .89 + 100 * Math.cos(a + 1));
+            int yr = (int)(h * .57 + 210 * Math.sin(a + 1));
+            sparkle(g, xr, yr, i % 4 == 0 ? 4 : 2);
         }
-        g.setColor(new Color(255, 255, 255, 55));
-        g.setStroke(new BasicStroke(1.4f));
-        g.drawLine(x + 16, y + 9, x + face - 20, y + 9);
+        g.setColor(new Color(236, 187, 91, 55));
+        g.setStroke(new BasicStroke(1.2f));
+        g.draw(new Arc2D.Double(-95, h * .52, 270, 270, -65, 220, Arc2D.OPEN));
+        g.draw(new Arc2D.Double(w - 175, h * .49, 270, 270, 25, 220, Arc2D.OPEN));
         g.dispose();
     }
 
-    private static Color tint(Color base, int delta, int alpha) {
-        return new Color(
-                Math.max(0, Math.min(255, base.getRed() + delta)),
-                Math.max(0, Math.min(255, base.getGreen() + delta)),
-                Math.max(0, Math.min(255, base.getBlue() + delta)),
-                alpha);
+    /**
+     * Draw the original transparent PNG directly.
+     * No backdrop, dark overlay, extra glow, or alpha manipulation.
+     */
+    private static final class RoyalRabbitSidePanel extends JPanel {
+        RoyalRabbitSidePanel() {
+            setOpaque(false);
+            setPreferredSize(new Dimension(350, 520));
+            setMinimumSize(new Dimension(260, 350));
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            super.paintComponent(graphics);
+            if (ROYAL_RABBIT == null) return;
+
+            Graphics2D g = (Graphics2D) graphics.create();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                    RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+
+            int w = getWidth();
+            int h = getHeight();
+            int availableW = Math.max(1, w - 14);
+            int availableH = Math.max(1, Math.min(520, h - 26));
+            double scale = Math.min(
+                    availableW / (double) ROYAL_RABBIT.getWidth(),
+                    availableH / (double) ROYAL_RABBIT.getHeight());
+            int iw = Math.max(1, (int) Math.round(ROYAL_RABBIT.getWidth() * scale));
+            int ih = Math.max(1, (int) Math.round(ROYAL_RABBIT.getHeight() * scale));
+            int x = (w - iw) / 2;
+            int y = Math.max(0, Math.min((h - ih) / 2 + 16, h - ih));
+
+            // Respect the PNG's existing transparency.
+            g.setComposite(AlphaComposite.SrcOver);
+            g.drawImage(ROYAL_RABBIT, x, y, iw, ih, null);
+            g.dispose();
+        }
+    }
+
+    private static void sparkle(Graphics2D g, int x, int y, int radius) {
+        Graphics2D z = (Graphics2D)g.create();
+        z.setColor(new Color(255, 215, 131, 175));
+        z.setStroke(new BasicStroke(1.2f));
+        z.drawLine(x-radius, y, x+radius, y);
+        z.drawLine(x, y-radius, x, y+radius);
+        z.dispose();
+    }
+
+    private static BufferedImage loadBrandImage(String name) {
+        try (InputStream in = GameSetupScreen.class.getResourceAsStream("/" + name)) {
+            if (in != null) return ImageIO.read(in);
+        } catch (IOException ignored) { }
+        try { return ImageIO.read(new File("src/main/resources/" + name)); }
+        catch (IOException ignored) { return null; }
+    }
+
+    /** Decorative gold laurel accents painted in Java, never font glyphs. */
+    private static final class RoyalTitleLabel extends JLabel {
+        RoyalTitleLabel(String text) { super(text); }
+        @Override protected void paintComponent(Graphics graphics) {
+            super.paintComponent(graphics);
+            Graphics2D g = (Graphics2D) graphics.create();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int textEnd = getInsets().left + getFontMetrics(getFont()).stringWidth(getText());
+            int cy = Math.max(8, getHeight() / 2);
+            // Two small botanical flourishes frame the title without covering letters.
+            drawTitleLaurel(g, textEnd + 22, cy, false);
+            g.dispose();
+        }
+        private static void drawTitleLaurel(Graphics2D g, int x, int y, boolean reverse) {
+            Graphics2D z = (Graphics2D) g.create();
+            z.translate(x, y);
+            if (reverse) z.scale(-1, 1);
+            z.setColor(new Color(236, 187, 91, 185));
+            z.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            z.draw(new QuadCurve2D.Double(0, 18, 17, 0, 2, -18));
+            for (int i = 0; i < 4; i++) {
+                int yy = 12 - i * 9;
+                int xx = 7 + (i % 2) * 5;
+                z.setColor(new Color(255, 213, 127, 200));
+                z.fill(new Ellipse2D.Double(xx, yy, 11, 4));
+                z.fill(new Ellipse2D.Double(xx - 9, yy - 4, 10, 4));
+            }
+            z.dispose();
+        }
+    }
+
+    /** Gold-trimmed royal button. Real JButton; listeners and enabled state stay intact. */
+    private static final class RoyalButton extends JButton {
+        private final Color top, edge, bottom;
+        RoyalButton(String label, Color top, Color edge, Color bottom) {
+            super(label);
+            this.top = top;
+            this.edge = edge;
+            this.bottom = bottom;
+            setOpaque(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setRolloverEnabled(true);
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            setForeground(new Color(255, 243, 207));
+            setFont(new Font("Segoe UI", Font.BOLD, 15));
+        }
+        @Override protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D)graphics.create();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int w = getWidth(), h = getHeight();
+            Color a = isEnabled() ? top : new Color(67, 45, 84);
+            Color b = isEnabled() ? bottom : new Color(40, 26, 64);
+            g.setPaint(new GradientPaint(0, 3, a, 0, h, b));
+            g.fillRoundRect(3, 3, w-6, h-6, 15, 15);
+            g.setColor(isEnabled() ? edge : new Color(129, 96, 118));
+            g.setStroke(new BasicStroke(getModel().isRollover() && isEnabled() ? 2f : 1.2f));
+            g.drawRoundRect(3, 3, w-7, h-7, 15, 15);
+            g.setColor(new Color(255, 229, 171, 55));
+            g.drawRoundRect(6, 6, w-13, h-13, 12, 12);
+            g.dispose();
+            super.paintComponent(graphics);
+            if ("Easy".equals(getText())) {
+                Graphics2D check = (Graphics2D) graphics.create();
+                check.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                check.setColor(new Color(42, 21, 62));
+                check.setStroke(new BasicStroke(2.1f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                int textWidth = check.getFontMetrics(getFont()).stringWidth(getText());
+                int cx = getWidth() / 2 + textWidth / 2 + 14;
+                int cy = getHeight() / 2;
+                check.drawLine(cx - 5, cy, cx - 1, cy + 4);
+                check.drawLine(cx - 1, cy + 4, cx + 7, cy - 6);
+                check.dispose();
+            }
+        }
     }
 
     /** Gold hover glow with a persistent gold selection. */
@@ -775,15 +875,15 @@ add(content);
                             w - 2 * (spread - 1), h - 2 * (spread - 1), 12, 12);
                 }
             }
-            Color top = selected ? new Color(255, 224, 139)
-                    : hover ? new Color(109, 88, 56) : new Color(48, 57, 93);
-            Color bottom = selected ? new Color(231, 172, 53)
-                    : hover ? new Color(75, 64, 61) : new Color(37, 47, 82);
+            Color top = selected ? new Color(255, 235, 176)
+                    : hover ? new Color(109, 88, 56) : new Color(68, 38, 91);
+            Color bottom = selected ? new Color(211, 146, 56)
+                    : hover ? new Color(75, 64, 61) : new Color(39, 20, 65);
             g.setPaint(new GradientPaint(0, 4, top, 0, h - 4, bottom));
             g.fillRoundRect(5, 5, w - 10, h - 10, 9, 9);
             g.setStroke(new BasicStroke(active ? 1.8f : 1f));
             g.setColor(active ? new Color(255, 228, 150)
-                    : new Color(111, 117, 150));
+                    : new Color(172, 125, 107));
             g.drawRoundRect(5, 5, w - 11, h - 11, 9, 9);
             g.dispose();
             setForeground(selected ? NAVY : IVORY);
@@ -821,14 +921,14 @@ add(content);
                 g.fillRoundRect(0, 0, w, h, 19, 19);
             }
             g.setPaint(new GradientPaint(0, 2,
-                    new Color(54, 64, 105), 0, h,
-                    new Color(31, 40, 76)));
+                    new Color(71, 40, 95), 0, h,
+                    new Color(37, 19, 64)));
             g.fillRoundRect(3, 3, w - 6, h - 6, 15, 15);
             g.setColor(focused ? new Color(255, 215, 122)
                     : new Color(180, 149, 91, 135));
             g.setStroke(new BasicStroke(focused ? 1.8f : 1f));
             g.drawRoundRect(3, 3, w - 7, h - 7, 15, 15);
-            g.setColor(new Color(255, 255, 255, 34));
+            g.setColor(new Color(255, 221, 165, 45));
             g.drawLine(16, 5, Math.max(16, w - 18), 5);
             g.dispose();
             super.paintComponent(graphics);
@@ -854,14 +954,14 @@ add(content);
         int height = getHeight() - 1;
 
         GradientPaint glass = new GradientPaint(
-                0, 0, new Color(255, 255, 255, 43),
-                width, height, new Color(255, 255, 255, 13)
+                0, 0, new Color(170, 99, 193, 55),
+                width, height, new Color(77, 39, 112, 90)
         );
 
         g.setPaint(glass);
         g.fillRoundRect(0, 0, width, height, 20, 20);
 
-        g.setColor(new Color(245, 225, 178, 95));
+        g.setColor(new Color(236, 187, 91, 130));
         g.setStroke(new BasicStroke(1.2f));
         g.drawRoundRect(0, 0, width, height, 20, 20);
 
