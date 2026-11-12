@@ -5,8 +5,8 @@ import java.util.List;
 
 /**
  * Easy-game state and turn order. Players act in the order they were added.
- * After a completed move, including a move that used a 6, the turn passes.
- * The extra turn after a 6 is intentionally left for Iteration 2.
+ * After a legal move made with a roll of 6, the same player rolls again.
+ * After any other completed move, the turn passes to the next player.
  */
 public final class Game {
 
@@ -79,7 +79,9 @@ public final class Game {
         }
         MovementRules.apply(piece, pendingRoll);
         movePending = false;
-        advanceTurn();
+        if (pendingRoll != 6) {
+            advanceTurn();
+        }
         return ActionResult.OK;
     }
 
