@@ -5,8 +5,8 @@ import java.util.List;
 
 /**
  * Easy-game state and turn order. Players act in the order they were added.
- * After a legal move made with a roll of 6, the same player rolls again.
- * After any other completed move, the turn passes to the next player.
+ * After a completed move, including a move that used a 6, the turn passes.
+ * The extra turn after a 6 is intentionally left for Iteration 2.
  */
 public final class Game {
 
@@ -67,23 +67,30 @@ public final class Game {
         return RollOutcome.pending(value, "Select one of your highlighted pieces.");
     }
 
-    public ActionResult move(Piece piece) {
-        if (!movePending) {
-            return ActionResult.NO_PENDING_MOVE;
-        }
-        if (piece == null || piece.getOwner() != getCurrentPlayer()) {
-            return ActionResult.NOT_YOUR_PIECE;
-        }
-        if (!MovementRules.isLegal(piece, pendingRoll)) {
-            return ActionResult.ILLEGAL_MOVE;
-        }
-        MovementRules.apply(piece, pendingRoll);
-        movePending = false;
-        if (pendingRoll != 6) {
-            advanceTurn();
-        }
-        return ActionResult.OK;
+    
+public ActionResult move(Piece piece) {
+    if (!movePending) {
+        return ActionResult.NO_PENDING_MOVE;
     }
+
+    if (piece == null || piece.getOwner() != getCurrentPlayer()) {
+        return ActionResult.NOT_YOUR_PIECE;
+    }
+
+    if (!MovementRules.isLegal(piece, pendingRoll)) {
+        return ActionResult.ILLEGAL_MOVE;
+    }
+
+    MovementRules.apply(piece, pendingRoll);
+    movePending = false;
+
+    if (pendingRoll != 6) {
+        advanceTurn();
+    }
+
+    return ActionResult.OK;
+}
+
 
     public List<Piece> getLegalPieces() {
         if (!movePending) {
