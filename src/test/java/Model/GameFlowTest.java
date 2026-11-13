@@ -28,11 +28,16 @@ class GameFlowTest {
     }
 
     @Test
-    void castleExitOnSixLetsTheSamePlayerRollAgain() {
-        Game game = Game.start(players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE), Dice.scripted(6, 3));
+    void castleExitOnSixGrantsExtraTurn() {
+        Game game = Game.start(
+            players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE),
+            Dice.scripted(6, 3)
+        );
+
         Piece piece = game.getCurrentPlayer().getPieces().get(2);
 
         RollOutcome roll = game.roll();
+
         assertTrue(roll.isAccepted());
         assertTrue(roll.isMovePending());
         assertEquals(6, roll.getValue());
@@ -40,17 +45,53 @@ class GameFlowTest {
         assertEquals(ActionResult.OK, game.move(piece));
         assertEquals(PieceLocation.TRACK, piece.getLocation());
         assertEquals(0, piece.getProgress());
+
+        // Rolling 6 grants an extra turn
         assertEquals("Noa", game.getCurrentPlayer().getName());
         assertEquals(1, game.getTurnNumber());
         assertFalse(game.isMovePending());
 
+        // Extra roll: 3, move the same piece
         RollOutcome extraRoll = game.roll();
-        assertTrue(extraRoll.isAccepted());
-        assertEquals(3, extraRoll.getValue());
-        assertTrue(extraRoll.isMovePending());
-        assertEquals("Noa", game.getCurrentPlayer().getName());
-    }
 
+        assertTrue(extraRoll.isAccepted());
+        assertTrue(extraRoll.isMovePending());
+        assertEquals(3, extraRoll.getValue());
+
+        assertEquals(ActionResult.OK, game.move(piece));
+        assertEquals(3, piece.getProgress());
+
+        // After a non-six move, the turn passes
+        assertEquals("Sam", game.getCurrentPlayer().getName());
+        assertEquals(2, game.getTurnNumber());
+    }
+    @Test
+    void thirdConsecutiveSixPassesTheTurnWithoutAMove() {
+            Game game = Game.start(
+                    players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE),
+                    Dice.scripted(6, 6, 6));
+
+            Player noa = game.getCurrentPlayer();
+            Piece firstPiece = noa.getPieces().get(0);
+            Piece secondPiece = noa.getPieces().get(1);
+            Piece thirdPiece = noa.getPieces().get(2);
+
+            assertEquals(6, game.roll().getValue());
+            assertEquals(ActionResult.OK, game.move(firstPiece));
+            assertEquals(noa, game.getCurrentPlayer());
+
+            assertEquals(6, game.roll().getValue());
+            assertEquals(ActionResult.OK, game.move(secondPiece));
+            assertEquals(noa, game.getCurrentPlayer());
+
+            game.roll();
+
+            assertEquals("Sam", game.getCurrentPlayer().getName());
+            assertEquals(2, game.getTurnNumber());
+            assertFalse(game.isMovePending());
+            assertEquals(ActionResult.NO_PENDING_MOVE, game.move(thirdPiece));
+            assertEquals(PieceLocation.CASTLE, thirdPiece.getLocation());
+        }
     @Test
     void aRollOtherThanSixDoesNotReleaseACastlePiece() {
         Game game = Game.start(players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE), Dice.scripted(4));

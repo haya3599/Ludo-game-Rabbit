@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Easy-game state and turn order. Players act in the order they were added.
- * After a legal move made with a roll of 6, the same player rolls again.
- * After any other completed move, the turn passes to the next player.
+ * Easy-game state and turn order.
+ * Players act in the order they were added.
+ * A successful move after rolling 6 grants an extra roll.
+ * A third consecutive 6 ends the turn immediately, before any move.
+ * After a successful non-six move, the turn passes.
  */
 public final class Game {
 
@@ -17,6 +19,7 @@ public final class Game {
     private int lastRoll;
     private boolean movePending;
     private int pendingRoll;
+    private int consecutiveSixes;
 
     private Game(List<Player> players, Dice dice) {
         this.players = List.copyOf(players);
@@ -56,6 +59,14 @@ public final class Game {
         }
         int value = dice.roll();
         lastRoll = value;
+        consecutiveSixes = value == 6 ? consecutiveSixes + 1 : 0;
+
+        if (consecutiveSixes == 3) {
+            advanceTurn();
+            return RollOutcome.passed(value,
+                    "Third consecutive six. Turn passes to " + getCurrentPlayer().getName() + ".");
+        }
+
         if (legalPieces(value).isEmpty()) {
             String waiting = getCurrentPlayer().getName();
             advanceTurn();
@@ -105,5 +116,6 @@ public final class Game {
     private void advanceTurn() {
         currentIndex = (currentIndex + 1) % players.size();
         turnNumber++;
+        consecutiveSixes = 0;
     }
 }
