@@ -78,13 +78,17 @@ public final class GameplayController {
             return;
         }
 
+        String playerName = game.getCurrentPlayer().getName();
+
         if (game.getTurnNumber() != previousTurn) {
             delayTransition(
                 previousPlayer,
                 previousTurn,
                 previousRoll,
-                "Turn completed."
+                "Turn passes to " + playerName + "."
             );
+        } else if (game.getCurrentPlayer() == piece.getOwner()) {
+            show(playerName + " rolled a 6 and can roll again.");
         } else {
             show("Continue playing.");
         }
@@ -115,7 +119,6 @@ public final class GameplayController {
         transitionTimer = new Timer(1000, event -> {
             transitionTimer = null;
 
-            // Update player, turn and dice together.
             displayedTurnNumber = -1;
             show("Roll the dice.");
 

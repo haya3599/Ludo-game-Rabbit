@@ -1,3 +1,4 @@
+
 package Model;
 
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ class GameFlowTest {
         assertEquals(2, game.getPlayers().size());
         assertEquals("Noa", game.getCurrentPlayer().getName());
         assertEquals(1, game.getTurnNumber());
+
         for (Player player : game.getPlayers()) {
             assertEquals(4, player.getPieces().size());
             for (Piece piece : player.getPieces()) {
@@ -26,22 +28,27 @@ class GameFlowTest {
     }
 
     @Test
-    void castleExitOnSixMovesTheSelectedPieceAndPassesTheTurn() {
-        Game game = Game.start(players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE), Dice.scripted(6));
+    void castleExitOnSixLetsTheSamePlayerRollAgain() {
+        Game game = Game.start(players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE), Dice.scripted(6, 3));
         Piece piece = game.getCurrentPlayer().getPieces().get(2);
 
         RollOutcome roll = game.roll();
-
         assertTrue(roll.isAccepted());
         assertTrue(roll.isMovePending());
         assertEquals(6, roll.getValue());
-        assertEquals(6, game.getLastRoll());
+
         assertEquals(ActionResult.OK, game.move(piece));
         assertEquals(PieceLocation.TRACK, piece.getLocation());
         assertEquals(0, piece.getProgress());
-        assertEquals("Sam", game.getCurrentPlayer().getName());
-        assertEquals(2, game.getTurnNumber());
+        assertEquals("Noa", game.getCurrentPlayer().getName());
+        assertEquals(1, game.getTurnNumber());
         assertFalse(game.isMovePending());
+
+        RollOutcome extraRoll = game.roll();
+        assertTrue(extraRoll.isAccepted());
+        assertEquals(3, extraRoll.getValue());
+        assertTrue(extraRoll.isMovePending());
+        assertEquals("Noa", game.getCurrentPlayer().getName());
     }
 
     @Test
@@ -77,8 +84,8 @@ class GameFlowTest {
         Game game = Game.start(players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE), Dice.scripted(6));
         Piece stuck = game.getCurrentPlayer().getPieces().get(3);
         stuck.placeAtProgress(Piece.MAX_PROGRESS);
-        game.roll();
 
+        game.roll();
         ActionResult result = game.move(stuck);
 
         assertEquals(ActionResult.ILLEGAL_MOVE, result);
@@ -90,6 +97,7 @@ class GameFlowTest {
     @Test
     void aPlayerCannotMoveAnotherPlayersPiece() {
         Game game = Game.start(players("Noa", PlayerColor.YELLOW, "Sam", PlayerColor.GREEN), Dice.scripted(6));
+
         game.roll();
         Piece opponentPiece = game.getPlayers().get(1).getPieces().get(0);
 
@@ -108,9 +116,9 @@ class GameFlowTest {
         piece.placeAtProgress(2);
 
         RollOutcome roll = game.roll();
+
         assertTrue(roll.isMovePending());
         assertEquals(ActionResult.OK, game.move(piece));
-
         assertEquals(5, piece.getProgress());
         assertEquals(PlayerColor.RED.getStartIndex() + 5, piece.getTrackIndex());
         assertEquals("Sam", game.getCurrentPlayer().getName());
@@ -138,14 +146,63 @@ class GameFlowTest {
         assertEquals(4, game.getTurnNumber());
     }
 
+    @Test
+    void cannotMoveBeforeRolling() {
+        Game game = Game.start(
+                players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE),
+                Dice.scripted(6));
+
+        Piece piece = game.getCurrentPlayer().getPieces().get(0);
+
+        ActionResult result = game.move(piece);
+
+        assertEquals(ActionResult.NO_PENDING_MOVE, result);
+        assertEquals(PieceLocation.CASTLE, piece.getLocation());
+        assertEquals("Noa", game.getCurrentPlayer().getName());
+        assertEquals(1, game.getTurnNumber());
+    }
+
+    @Test
+    void playersTakeTurnsAfterSuccessfulMoves() {
+        Game game = Game.start(
+                players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE),
+                Dice.scripted(6, 3, 6, 2));
+
+        Piece noaPiece = game.getPlayers().get(0).getPieces().get(0);
+        Piece samPiece = game.getPlayers().get(1).getPieces().get(0);
+
+        game.roll(); // Noa rolls 6 and leaves the castle.
+        assertEquals(ActionResult.OK, game.move(noaPiece));
+        assertEquals("Noa", game.getCurrentPlayer().getName());
+
+        game.roll(); // Noa rolls 3, moves, and passes the turn.
+        assertEquals(ActionResult.OK, game.move(noaPiece));
+        assertEquals("Sam", game.getCurrentPlayer().getName());
+        assertEquals(2, game.getTurnNumber());
+
+        game.roll(); // Sam rolls 6 and leaves the castle.
+        assertEquals(ActionResult.OK, game.move(samPiece));
+        assertEquals("Sam", game.getCurrentPlayer().getName());
+
+        game.roll(); // Sam rolls 2, moves, and passes the turn.
+        assertEquals(ActionResult.OK, game.move(samPiece));
+        assertEquals("Noa", game.getCurrentPlayer().getName());
+        assertEquals(3, game.getTurnNumber());
+    }
+
     private static GameConfig players(Object... nameAndColor) {
         if (nameAndColor.length % 2 != 0) {
             throw new IllegalArgumentException("Expected name and colour pairs.");
         }
+
         var slots = new java.util.ArrayList<GameConfig.Slot>();
+
         for (int index = 0; index < nameAndColor.length; index += 2) {
-            slots.add(new GameConfig.Slot((String) nameAndColor[index], (PlayerColor) nameAndColor[index + 1]));
+            slots.add(new GameConfig.Slot(
+                    (String) nameAndColor[index],
+                    (PlayerColor) nameAndColor[index + 1]));
         }
+
         return new GameConfig(List.copyOf(slots));
     }
 }
