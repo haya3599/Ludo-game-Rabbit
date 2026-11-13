@@ -67,21 +67,30 @@ public final class Game {
         return RollOutcome.pending(value, "Select one of your highlighted pieces.");
     }
 
-    public ActionResult move(Piece piece) {
-        if (!movePending) {
-            return ActionResult.NO_PENDING_MOVE;
-        }
-        if (piece == null || piece.getOwner() != getCurrentPlayer()) {
-            return ActionResult.NOT_YOUR_PIECE;
-        }
-        if (!MovementRules.isLegal(piece, pendingRoll)) {
-            return ActionResult.ILLEGAL_MOVE;
-        }
-        MovementRules.apply(piece, pendingRoll);
-        movePending = false;
-        advanceTurn();
-        return ActionResult.OK;
+    
+public ActionResult move(Piece piece) {
+    if (!movePending) {
+        return ActionResult.NO_PENDING_MOVE;
     }
+
+    if (piece == null || piece.getOwner() != getCurrentPlayer()) {
+        return ActionResult.NOT_YOUR_PIECE;
+    }
+
+    if (!MovementRules.isLegal(piece, pendingRoll)) {
+        return ActionResult.ILLEGAL_MOVE;
+    }
+
+    MovementRules.apply(piece, pendingRoll);
+    movePending = false;
+
+    if (pendingRoll != 6) {
+        advanceTurn();
+    }
+
+    return ActionResult.OK;
+}
+
 
     public List<Piece> getLegalPieces() {
         if (!movePending) {
