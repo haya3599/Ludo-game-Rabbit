@@ -237,8 +237,8 @@ public final class BoardPanel extends JPanel {
         c.fillRect(x + 2, y + 3, size, size);
 
         Color[] colors = {
-            royal(PlayerColor.GREEN), royal(PlayerColor.YELLOW),
-            royal(PlayerColor.BLUE), royal(PlayerColor.RED)
+            royal(PlayerColor.YELLOW), royal(PlayerColor.BLUE),
+            royal(PlayerColor.RED), royal(PlayerColor.GREEN)
         };
         int[][] edges = {
             {x, y, x + size, y},
