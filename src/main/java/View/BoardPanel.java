@@ -39,7 +39,7 @@ public final class BoardPanel extends JPanel {
 
     public BoardPanel() {
         setPreferredSize(new Dimension(780, 780));
-        setBackground(new Color(247, 242, 233));
+        setOpaque(false);
         addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent event) {
@@ -72,9 +72,6 @@ public final class BoardPanel extends JPanel {
         Graphics2D g2 = (Graphics2D) graphics.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         // Warm pearl canvas, no black gutters.
-        g2.setPaint(new GradientPaint(0, 0, new Color(255, 253, 247),
-                getWidth(), getHeight(), new Color(232, 220, 199)));
-        g2.fillRect(0, 0, getWidth(), getHeight());
         int side = cell * BoardGeometry.GRID_SIZE;
         g2.setColor(new Color(159, 120, 66, 30));
         g2.fillRoundRect(originX - 7, originY + 7, side + 14, side + 10, 24, 24);
