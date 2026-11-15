@@ -26,7 +26,7 @@ class GameFlowTest {
     }
 
     @Test
-    void castleExitOnSixMovesTheSelectedPieceAndPassesTheTurn() {
+    void castleExitOnSixMovesTheSelectedPieceAndKeepsTheTurn() {
         Game game = Game.start(players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE), Dice.scripted(6));
         Piece piece = game.getCurrentPlayer().getPieces().get(2);
 
@@ -39,8 +39,8 @@ class GameFlowTest {
         assertEquals(ActionResult.OK, game.move(piece));
         assertEquals(PieceLocation.TRACK, piece.getLocation());
         assertEquals(0, piece.getProgress());
-        assertEquals("Sam", game.getCurrentPlayer().getName());
-        assertEquals(2, game.getTurnNumber());
+        assertEquals("Noa", game.getCurrentPlayer().getName());
+        assertEquals(1, game.getTurnNumber());
         assertFalse(game.isMovePending());
     }
 
