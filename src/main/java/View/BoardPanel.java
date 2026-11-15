@@ -202,7 +202,7 @@ public final class BoardPanel extends JPanel {
             fillCell(g2, track.get(index), fill, new Color(194, 152, 77));
             if (start != null) {
                 Color marker = start == PlayerColor.YELLOW ? new Color(29, 24, 22) : new Color(255, 231, 167);
-                drawMarker(g2, track.get(index), "★", marker);
+                drawMarker(g2, track.get(index), "#", marker);
             }
             PlayerColor arrow = BoardGeometry.arrowColor(index);
             if (arrow != null) {

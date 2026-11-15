@@ -88,7 +88,7 @@ public final class RoyalLeaveDialog {
 
     
 
-private static JLabel createRabbitLabel() {
+static JLabel createRabbitLabel() {
     JLabel label = new JLabel() {
         private BufferedImage rabbitImage;
 

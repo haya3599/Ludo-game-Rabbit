@@ -635,6 +635,10 @@ public final class GameScreen extends JPanel {
         JPanel results = new JPanel();
         results.setOpaque(false);
         results.setLayout(new BoxLayout(results, BoxLayout.Y_AXIS));
+        JLabel rabbit = RoyalLeaveDialog.createRabbitLabel();
+        fixed(rabbit, 140, 140);
+        results.add(rabbit);
+        results.add(Box.createVerticalStrut(18));
         JLabel title = new JLabel("GAME COMPLETE");
         title.setFont(new Font("Serif", Font.BOLD, 43));
         title.setForeground(LIGHT_GOLD);
