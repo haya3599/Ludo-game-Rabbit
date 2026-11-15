@@ -160,15 +160,16 @@ class GameFlowTest {
         Piece attacker = game.getPlayers().get(0).getPieces().get(0);
         Piece passed = game.getPlayers().get(1).getPieces().get(0);
         Piece protectedPiece = game.getPlayers().get(1).getPieces().get(1);
-        attacker.placeAtProgress(11);
-        passed.placeAtProgress(25); // Absolute index 12, crossed by the move.
-        protectedPiece.placeAtProgress(26); // Star at absolute index 13.
+        attacker.placeAtProgress(6);
+        passed.placeAtProgress(20); // Absolute index 7, crossed by the move.
+        protectedPiece.placeAtProgress(21); // Star at absolute index 8.
         game.roll();
         assertEquals(ActionResult.OK, game.move(attacker));
-        assertEquals(25, passed.getProgress());
-        assertEquals(26, protectedPiece.getProgress());
+        assertEquals(20, passed.getProgress());
+        assertEquals(21, protectedPiece.getProgress());
         for (PlayerColor color : PlayerColor.values()) {
-            assertTrue(BoardGeometry.isProtected(color.getStartIndex()));
+            assertTrue(BoardGeometry.isProtected((color.getStartIndex() + 8) % Piece.TRACK_LENGTH));
+            assertFalse(BoardGeometry.isProtected(color.getStartIndex()));
         }
     }
 
@@ -243,6 +244,39 @@ class GameFlowTest {
         game.roll();
         assertEquals("B", game.getCurrentPlayer().getName());
         assertEquals(List.of(first), game.getRankings());
+    }
+
+    @Test
+    void landingOnANewStarDoesNotCaptureAnOpponent() {
+        Game game = Game.start(players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE), Dice.scripted(1));
+        Piece attacker = game.getPlayers().get(0).getPieces().get(0);
+        Piece opponent = game.getPlayers().get(1).getPieces().get(0);
+        attacker.placeAtProgress(7);
+        opponent.placeAtProgress(21); // Absolute index 8: the red star.
+        game.roll();
+        assertEquals(ActionResult.OK, game.move(attacker));
+        assertEquals(8, attacker.getTrackIndex());
+        assertEquals(PieceLocation.TRACK, opponent.getLocation());
+        assertEquals(8, opponent.getTrackIndex());
+    }
+
+    @Test
+    void hashStartSquaresAllowCapturesForEveryColor() {
+        PlayerColor[] colors = PlayerColor.values();
+        for (int i = 0; i < colors.length; i++) {
+            PlayerColor defenderColor = colors[i];
+            PlayerColor attackerColor = colors[(i + 1) % colors.length];
+            Game game = Game.start(players("Attacker", attackerColor, "Defender", defenderColor), Dice.scripted(1));
+            Piece attacker = game.getPlayers().get(0).getPieces().get(0);
+            Piece defender = game.getPlayers().get(1).getPieces().get(0);
+            int distance = Math.floorMod(defenderColor.getStartIndex() - attackerColor.getStartIndex(), Piece.TRACK_LENGTH);
+            attacker.placeAtProgress(distance - 1);
+            defender.placeAtProgress(0);
+            game.roll();
+            assertEquals(ActionResult.OK, game.move(attacker));
+            assertEquals(defenderColor.getStartIndex(), attacker.getTrackIndex());
+            assertEquals(PieceLocation.CASTLE, defender.getLocation());
+        }
     }
 
     private static GameConfig players(Object... nameAndColor) {

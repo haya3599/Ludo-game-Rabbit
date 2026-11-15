@@ -42,7 +42,7 @@ ludo-game/
 - Regular die, 1 through 6. A castle piece can leave only on a 6, and that 6 places it on the colour's start square.
 - The current player chooses a legal piece. Illegal selections and other players' pieces are rejected.
 - A completed move on a 6 grants another roll unless the player finishes. Finished players are skipped.
-- Landing on exactly one rival on a regular track square returns that piece to its castle. Starred start squares protect pieces from capture.
+- Landing on exactly one rival on a regular track square returns that piece to its castle. Only star squares protect pieces from capture; # start squares do not.
 - Pieces enter their home lane directly from the drawn arrow, with an exact roll required to reach the final square.
 - Play ends when only one player has not finished all four pieces (1 finisher for 2 players, 2 for 3, 3 for 4). Results show finish order and the remaining player last; the clock stops.
 - The board shows the current player, the latest roll, the turn number, and elapsed time as MM:SS.

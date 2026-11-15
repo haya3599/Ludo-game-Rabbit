@@ -204,6 +204,10 @@ public final class BoardPanel extends JPanel {
                 Color marker = start == PlayerColor.YELLOW ? new Color(29, 24, 22) : new Color(255, 231, 167);
                 drawMarker(g2, track.get(index), "#", marker);
             }
+            PlayerColor star = BoardGeometry.starColor(index);
+            if (star != null) {
+                drawMarker(g2, track.get(index), "★", royal(star));
+            }
             PlayerColor arrow = BoardGeometry.arrowColor(index);
             if (arrow != null) {
                 drawArrow(g2, track.get(index), arrow);

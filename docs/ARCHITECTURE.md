@@ -78,6 +78,6 @@ All four players share one computer. "Only the current player can roll" means th
 
 Players act in the order they were added during setup, not in colour order. The turn number starts at 1 and increases when the turn passes. A completed move on a 6 grants another roll unless the player has finished all four pieces. Finished players are recorded in finish order and skipped in subsequent turns. The rule that cancels a third consecutive 6 is not implemented.
 
-After movement, `Game` returns a single opposing piece on the destination track square to its castle, resetting its progress. Starred start squares are protected. Passing pieces, friendly pieces, pieces in home lanes, and destinations occupied by multiple rivals do not trigger this capture rule. Double Block rules remain unimplemented.
+After movement, `Game` returns a single opposing piece on the destination track square to its castle, resetting its progress. Only star squares are protected; # start squares allow captures. Passing pieces, friendly pieces, pieces in home lanes, and destinations occupied by multiple rivals do not trigger this capture rule. Double Block rules remain unimplemented.
 
 The game ends as soon as all but one player have finished (1, 2, or 3 finishers for games of 2, 3, or 4). `Game` rejects further rolls and moves. `GameplayController` switches `GameScreen` to results with the finish order followed by the remaining player, stops the clock and disables play. The results button returns directly to Home.

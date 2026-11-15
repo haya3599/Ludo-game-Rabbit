@@ -67,6 +67,22 @@ class BoardGeometryTest {
         }
     }
 
+    @Test
+    void fourStarsOccupyTheUncoloredSquaresInTheReference() {
+        var expected = java.util.Map.of(
+                8, new GridPoint(2, 8), 21, new GridPoint(6, 2),
+                34, new GridPoint(12, 6), 47, new GridPoint(8, 12));
+        int stars = 0;
+        for (int index = 0; index < Piece.TRACK_LENGTH; index++) {
+            if (BoardGeometry.starColor(index) == null) continue;
+            stars++;
+            assertEquals(expected.get(index), BoardGeometry.track().get(index));
+            assertEquals(null, BoardGeometry.startingColor(index));
+            assertTrue(BoardGeometry.isProtected(index));
+        }
+        assertEquals(4, stars);
+    }
+
     private static boolean onBoard(GridPoint cell) {
         return cell.column() >= 0 && cell.column() < BoardGeometry.GRID_SIZE
                 && cell.row() >= 0 && cell.row() < BoardGeometry.GRID_SIZE;

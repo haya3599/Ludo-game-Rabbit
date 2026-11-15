@@ -96,9 +96,18 @@ public final class BoardGeometry {
         return (color.getStartIndex() + Piece.HOME_ENTRY_PROGRESS - 1) % Piece.TRACK_LENGTH;
     }
 
-    /** Starred start squares protect every piece occupying them. */
+    public static PlayerColor starColor(int trackIndex) {
+        for (PlayerColor color : PlayerColor.values()) {
+            if ((color.getStartIndex() + 8) % Piece.TRACK_LENGTH == trackIndex) {
+                return color;
+            }
+        }
+        return null;
+    }
+
+    /** Only star squares protect pieces; the # start markers do not. */
     public static boolean isProtected(int trackIndex) {
-        return startingColor(trackIndex) != null;
+        return starColor(trackIndex) != null;
     }
 
     public static PlayerColor arrowColor(int trackIndex) {
