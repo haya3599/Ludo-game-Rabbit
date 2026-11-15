@@ -12,7 +12,10 @@ public final class HomeScreens {
 
     public static void register(AppController app) {
         HomeScreen home = new HomeScreen();
-        home.setOnNewGame(() -> app.show(ScreenId.SETUP));
+        home.setOnNewGame(() -> {
+            SetupScreens.register(app);
+            app.show(ScreenId.SETUP);
+        });
         app.register(ScreenId.HOME, home);
     }
 }
