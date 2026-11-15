@@ -33,4 +33,8 @@ public final class Player {
     public List<Piece> getPieces() {
         return List.copyOf(pieces);
     }
+
+    public boolean isFinished() {
+        return pieces.stream().allMatch(Piece::isFinished);
+    }
 }

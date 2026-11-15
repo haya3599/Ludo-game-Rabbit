@@ -11,7 +11,7 @@ import java.util.Map;
  * track, and six home-lane squares for each colour. Start squares are 13
  * apart. Red begins at the bottom-left of the cross, then Green, Yellow, and
  * Blue. The arrow square is the last main-track square of a colour's route,
- * immediately before that colour would return to its start. The next six steps
+ * two squares before that colour would return to its start. The next six steps
  * are the home lane. Verify these coordinates against the SRS figures if the
  * course later supplies them in the repository.
  */
@@ -93,7 +93,12 @@ public final class BoardGeometry {
     }
 
     public static int arrowIndex(PlayerColor color) {
-        return (color.getStartIndex() + Piece.TRACK_LENGTH - 1) % Piece.TRACK_LENGTH;
+        return (color.getStartIndex() + Piece.HOME_ENTRY_PROGRESS - 1) % Piece.TRACK_LENGTH;
+    }
+
+    /** Starred start squares protect every piece occupying them. */
+    public static boolean isProtected(int trackIndex) {
+        return startingColor(trackIndex) != null;
     }
 
     public static PlayerColor arrowColor(int trackIndex) {

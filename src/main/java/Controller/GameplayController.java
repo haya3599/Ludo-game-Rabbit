@@ -34,7 +34,7 @@ public final class GameplayController {
     }
 
     private void roll() {
-        if (transitioning) {
+        if (transitioning || game.isOver()) {
             return;
         }
 
@@ -63,7 +63,7 @@ public final class GameplayController {
     }
 
     private void selectPiece(Piece piece) {
-        if (transitioning) {
+        if (transitioning || game.isOver()) {
             return;
         }
 
@@ -75,6 +75,12 @@ public final class GameplayController {
 
         if (result != ActionResult.OK) {
             screen.setMessage(result.getMessage());
+            return;
+        }
+
+        if (game.isOver()) {
+            if (transitionTimer != null) transitionTimer.stop();
+            screen.showResults(game.getRankings());
             return;
         }
 

@@ -6,8 +6,7 @@ package Model;
  * steps. Steps that pass the colour's arrow enter its six-square home lane.
  * A move that would pass the final home square is illegal.
  *
- * <p>Capture, blocks, protection, and the extra turn after a 6 are not applied
- * here. Those rules belong to a later iteration.
+ * <p>Game resolves captures and protected squares after movement.
  */
 public final class MovementRules {
 

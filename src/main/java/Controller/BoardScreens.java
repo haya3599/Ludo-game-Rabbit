@@ -30,7 +30,7 @@ public final class BoardScreens {
         new GameplayController(game, screen);
 
         screen.setOnLeave(() -> {
-    if (View.RoyalLeaveDialog.confirm(app.getFrame())) {
+    if (game.isOver() || View.RoyalLeaveDialog.confirm(app.getFrame())) {
         app.show(ScreenId.HOME);
     }
 });

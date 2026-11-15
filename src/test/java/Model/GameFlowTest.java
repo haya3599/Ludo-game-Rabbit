@@ -138,6 +138,113 @@ class GameFlowTest {
         assertEquals(4, game.getTurnNumber());
     }
 
+    @Test
+    void landingOnSingleOpponentCapturesAndResetsItsRoute() {
+        Game game = Game.start(players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE), Dice.scripted(1));
+        Piece attacker = game.getPlayers().get(0).getPieces().get(0);
+        Piece opponent = game.getPlayers().get(1).getPieces().get(0);
+        attacker.placeAtProgress(2);
+        opponent.placeAtProgress(16); // Both land at absolute track index 3.
+        game.roll();
+        assertEquals(ActionResult.OK, game.move(attacker));
+        assertEquals(PieceLocation.CASTLE, opponent.getLocation());
+        assertEquals(-1, opponent.getProgress());
+        assertFalse(MovementRules.isLegal(opponent, 1));
+        MovementRules.apply(opponent, 6);
+        assertEquals(PlayerColor.BLUE.getStartIndex(), opponent.getTrackIndex());
+    }
+
+    @Test
+    void starsProtectOpponentsAndPassingDoesNotCapture() {
+        Game game = Game.start(players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE), Dice.scripted(2));
+        Piece attacker = game.getPlayers().get(0).getPieces().get(0);
+        Piece passed = game.getPlayers().get(1).getPieces().get(0);
+        Piece protectedPiece = game.getPlayers().get(1).getPieces().get(1);
+        attacker.placeAtProgress(11);
+        passed.placeAtProgress(25); // Absolute index 12, crossed by the move.
+        protectedPiece.placeAtProgress(26); // Star at absolute index 13.
+        game.roll();
+        assertEquals(ActionResult.OK, game.move(attacker));
+        assertEquals(25, passed.getProgress());
+        assertEquals(26, protectedPiece.getProgress());
+        for (PlayerColor color : PlayerColor.values()) {
+            assertTrue(BoardGeometry.isProtected(color.getStartIndex()));
+        }
+    }
+
+    @Test
+    void friendlyPiecesAndMultipleOpponentsAreNotCaptured() {
+        Game game = Game.start(players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE), Dice.scripted(1));
+        Piece attacker = game.getPlayers().get(0).getPieces().get(0);
+        Piece friend = game.getPlayers().get(0).getPieces().get(1);
+        attacker.placeAtProgress(2);
+        friend.placeAtProgress(3);
+        for (Piece opponent : game.getPlayers().get(1).getPieces()) opponent.placeAtProgress(16);
+        game.roll();
+        assertEquals(ActionResult.OK, game.move(attacker));
+        assertEquals(3, friend.getProgress());
+        for (Piece opponent : game.getPlayers().get(1).getPieces()) assertEquals(16, opponent.getProgress());
+    }
+
+    @Test
+    void homeLanesOfDifferentColorsDoNotCaptureEachOther() {
+        Game game = Game.start(players("Noa", PlayerColor.RED, "Sam", PlayerColor.BLUE), Dice.scripted(1));
+        Piece attacker = game.getPlayers().get(0).getPieces().get(0);
+        Piece opponent = game.getPlayers().get(1).getPieces().get(0);
+        attacker.placeAtProgress(Piece.HOME_ENTRY_PROGRESS - 1);
+        opponent.placeAtProgress(Piece.HOME_ENTRY_PROGRESS);
+        game.roll();
+        assertEquals(ActionResult.OK, game.move(attacker));
+        assertEquals(PieceLocation.HOME, opponent.getLocation());
+        assertEquals(PieceLocation.HOME, attacker.getLocation());
+    }
+
+    @Test
+    void gamesEndOnlyAfterAllButOnePlayerFinishAndRejectFurtherPlay() {
+        for (int count = 2; count <= 4; count++) {
+            var slots = new java.util.ArrayList<GameConfig.Slot>();
+            PlayerColor[] colors = PlayerColor.values();
+            for (int i = 0; i < count; i++) slots.add(new GameConfig.Slot("P" + i, colors[i]));
+            Game game = Game.start(new GameConfig(slots), Dice.scripted(6, 6, 6));
+            for (int i = 0; i < count - 1; i++) {
+                Player player = game.getPlayers().get(i);
+                assertEquals(player, game.getCurrentPlayer());
+                for (Piece piece : player.getPieces()) piece.placeAtProgress(Piece.MAX_PROGRESS);
+                Piece last = player.getPieces().get(3);
+                last.placeAtProgress(Piece.MAX_PROGRESS - 6);
+                assertFalse(player.isFinished());
+                assertTrue(game.roll().isMovePending());
+                assertEquals(ActionResult.OK, game.move(last));
+                assertTrue(player.isFinished());
+                assertEquals(i == count - 2, game.isOver());
+            }
+            assertEquals(game.getPlayers(), game.getRankings());
+            int turn = game.getTurnNumber();
+            assertFalse(game.roll().isAccepted());
+            assertEquals(ActionResult.GAME_OVER, game.move(game.getPlayers().get(count - 1).getPieces().get(0)));
+            assertEquals(turn, game.getTurnNumber());
+            assertTrue(game.getLegalPieces().isEmpty());
+        }
+    }
+
+    @Test
+    void finishedPlayersAreSkippedWhenTurnOrderWraps() {
+        Game game = Game.start(players("A", PlayerColor.RED, "B", PlayerColor.BLUE, "C", PlayerColor.GREEN),
+                Dice.scripted(1, 1, 1));
+        Player first = game.getCurrentPlayer();
+        for (Piece piece : first.getPieces()) piece.placeAtProgress(Piece.MAX_PROGRESS);
+        Piece last = first.getPieces().get(0);
+        last.placeAtProgress(Piece.MAX_PROGRESS - 1);
+        game.roll();
+        game.move(last);
+        assertFalse(game.isOver());
+        assertEquals("B", game.getCurrentPlayer().getName());
+        game.roll();
+        game.roll();
+        assertEquals("B", game.getCurrentPlayer().getName());
+        assertEquals(List.of(first), game.getRankings());
+    }
+
     private static GameConfig players(Object... nameAndColor) {
         if (nameAndColor.length % 2 != 0) {
             throw new IllegalArgumentException("Expected name and colour pairs.");

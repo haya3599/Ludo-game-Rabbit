@@ -7,8 +7,10 @@ public final class Piece {
 
     public static final int TRACK_LENGTH = 52;
     public static final int HOME_LENGTH = 6;
+    /** The arrow is reached after 50 steps; the next step enters home. */
+    public static final int HOME_ENTRY_PROGRESS = TRACK_LENGTH - 1;
     /** Last legal progress: the sixth home-lane square. */
-    public static final int MAX_PROGRESS = TRACK_LENGTH + HOME_LENGTH - 1;
+    public static final int MAX_PROGRESS = HOME_ENTRY_PROGRESS + HOME_LENGTH - 1;
 
     private final Player owner;
     private final int index;
@@ -47,7 +49,7 @@ public final class Piece {
         if (location != PieceLocation.HOME) {
             throw new IllegalStateException("Piece is not on the home lane.");
         }
-        return progress - TRACK_LENGTH;
+        return progress - HOME_ENTRY_PROGRESS;
     }
 
     /**
@@ -59,10 +61,19 @@ public final class Piece {
             throw new IllegalArgumentException("Progress out of range: " + progress);
         }
         this.progress = progress;
-        this.location = progress < TRACK_LENGTH ? PieceLocation.TRACK : PieceLocation.HOME;
+        this.location = progress < HOME_ENTRY_PROGRESS ? PieceLocation.TRACK : PieceLocation.HOME;
     }
 
     void exitCastleToStart() {
         placeAtProgress(0);
+    }
+
+    void returnToCastle() {
+        progress = -1;
+        location = PieceLocation.CASTLE;
+    }
+
+    public boolean isFinished() {
+        return progress == MAX_PROGRESS;
     }
 }

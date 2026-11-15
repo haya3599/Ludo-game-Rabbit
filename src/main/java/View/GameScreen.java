@@ -39,6 +39,7 @@ public final class GameScreen extends JPanel {
     private final long startedAt = System.currentTimeMillis();
 
     private Player displayedPlayer;
+    private boolean finished;
     private Runnable onRoll = () -> {};
     private Runnable onLeave = () -> {};
 
@@ -623,6 +624,50 @@ public final class GameScreen extends JPanel {
         this.onLeave = onLeave == null ? () -> {} : onLeave;
     }
 
+    public void showResults(List<Player> rankings) {
+        finished = true;
+        updateClock();
+        clock.stop();
+        setRollEnabled(false);
+        setHighlights(List.of());
+        board.setOnPieceSelected(piece -> {});
+
+        JPanel results = new JPanel();
+        results.setOpaque(false);
+        results.setLayout(new BoxLayout(results, BoxLayout.Y_AXIS));
+        JLabel title = new JLabel("GAME COMPLETE");
+        title.setFont(new Font("Serif", Font.BOLD, 43));
+        title.setForeground(LIGHT_GOLD);
+        center(title);
+        results.add(title);
+        results.add(Box.createVerticalStrut(18));
+        JLabel elapsed = caption("Elapsed Time: " + timeLabel.getText());
+        results.add(elapsed);
+        results.add(Box.createVerticalStrut(24));
+        for (int index = 0; index < rankings.size(); index++) {
+            Player player = rankings.get(index);
+            JLabel row = new JLabel((index + 1) + ".  " + player.getName()
+                    + "  (" + player.getColor().getDisplayName() + ")"
+                    + (player.isFinished() ? " — Finished" : " — Remaining player"));
+            row.setFont(new Font("SansSerif", Font.BOLD, 21));
+            row.setForeground(index == 0 ? LIGHT_GOLD : SOFT);
+            center(row);
+            results.add(row);
+            results.add(Box.createVerticalStrut(16));
+        }
+        JButton home = new RoyalButton("Back to Home", true);
+        fixed(home, 260, 52);
+        home.addActionListener(event -> onLeave.run());
+        results.add(Box.createVerticalStrut(16));
+        results.add(home);
+
+        removeAll();
+        setLayout(new GridBagLayout());
+        add(results);
+        revalidate();
+        repaint();
+    }
+
     private void updateClock() {
         long seconds = Math.max(0,
                 (System.currentTimeMillis() - startedAt) / 1000);
@@ -634,7 +679,7 @@ public final class GameScreen extends JPanel {
     public void setVisible(boolean visible) {
         super.setVisible(visible);
         if (clock != null) {
-            if (visible) clock.start();
+            if (visible && !finished) clock.start();
             else clock.stop();
         }
     }

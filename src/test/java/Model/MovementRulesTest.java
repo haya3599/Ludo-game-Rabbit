@@ -45,7 +45,7 @@ class MovementRulesTest {
         piece.placeAtProgress(50);
         MovementRules.apply(piece, 4);
         assertEquals(PieceLocation.HOME, piece.getLocation());
-        assertEquals(2, piece.getHomeIndex());
+        assertEquals(3, piece.getHomeIndex());
     }
 
     @Test
@@ -57,8 +57,8 @@ class MovementRulesTest {
         assertThrows(IllegalArgumentException.class, () -> MovementRules.apply(piece, 6));
         assertEquals(55, piece.getProgress());
 
-        assertTrue(MovementRules.isLegal(piece, 2));
-        MovementRules.apply(piece, 2);
+        assertTrue(MovementRules.isLegal(piece, 1));
+        MovementRules.apply(piece, 1);
         assertEquals(Piece.MAX_PROGRESS, piece.getProgress());
         assertEquals(5, piece.getHomeIndex());
     }

@@ -46,7 +46,25 @@ class BoardGeometryTest {
         assertEquals(39, PlayerColor.BLUE.getStartIndex());
         assertNotNull(BoardGeometry.startingColor(0));
         assertEquals(PlayerColor.RED, BoardGeometry.startingColor(0));
-        assertEquals(51, BoardGeometry.arrowIndex(PlayerColor.RED));
+        assertEquals(50, BoardGeometry.arrowIndex(PlayerColor.RED));
+    }
+
+    @Test
+    void everyArrowLeadsStraightIntoItsHomeLane() {
+        for (PlayerColor color : PlayerColor.values()) {
+            Piece piece = new Player("Player", color).getPieces().get(0);
+            piece.placeAtProgress(Piece.HOME_ENTRY_PROGRESS - 2);
+            MovementRules.apply(piece, 1);
+            GridPoint arrow = BoardGeometry.cellFor(piece);
+            assertEquals(BoardGeometry.track().get(BoardGeometry.arrowIndex(color)), arrow);
+            MovementRules.apply(piece, 1);
+            GridPoint home = BoardGeometry.cellFor(piece);
+            assertEquals(PieceLocation.HOME, piece.getLocation());
+            assertEquals(0, piece.getHomeIndex());
+            assertEquals(1, Math.abs(arrow.column() - home.column())
+                    + Math.abs(arrow.row() - home.row()), color.toString());
+            assertEquals(BoardGeometry.homeLane(color).get(0), home);
+        }
     }
 
     private static boolean onBoard(GridPoint cell) {
