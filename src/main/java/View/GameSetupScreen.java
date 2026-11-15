@@ -894,7 +894,7 @@ countRow.setPreferredSize(new Dimension(850, 48));
         }
     }
 
-    /** Rounded glass name editor with a gold focus halo. */
+    /** Transparent name editor with a gold writing line. */
     private static final class LuxuryNameField extends JTextField {
         private LuxuryNameField(String value) {
             super(value);
@@ -919,20 +919,10 @@ countRow.setPreferredSize(new Dimension(850, 48));
                     RenderingHints.VALUE_ANTIALIAS_ON);
             int w = getWidth(), h = getHeight();
             boolean focused = hasFocus();
-            if (focused) {
-                g.setColor(new Color(245, 197, 66, 28));
-                g.fillRoundRect(0, 0, w, h, 19, 19);
-            }
-            g.setPaint(new GradientPaint(0, 2,
-                    new Color(71, 40, 95), 0, h,
-                    new Color(37, 19, 64)));
-            g.fillRoundRect(3, 3, w - 6, h - 6, 15, 15);
             g.setColor(focused ? new Color(255, 215, 122)
                     : new Color(180, 149, 91, 135));
             g.setStroke(new BasicStroke(focused ? 1.8f : 1f));
-            g.drawRoundRect(3, 3, w - 7, h - 7, 15, 15);
-            g.setColor(new Color(255, 221, 165, 45));
-            g.drawLine(16, 5, Math.max(16, w - 18), 5);
+            g.drawLine(16, h - 5, Math.max(16, w - 18), h - 5);
             g.dispose();
             super.paintComponent(graphics);
         }
