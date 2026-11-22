@@ -8,7 +8,7 @@ import java.util.Random;
  * A regular six-sided step die. Tests use {@link #scripted(int...)} so results
  * are deterministic. A scripted value outside 1 to 6 is rejected.
  */
-public final class Dice {
+public final class Dice implements GameDie {
 
     private final Random random;
     private final Queue<Integer> script;
@@ -37,6 +37,7 @@ public final class Dice {
         return new Dice(new Random(0), queue);
     }
 
+    @Override
     public int roll() {
         int value;
         if (script != null) {
