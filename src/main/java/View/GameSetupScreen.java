@@ -1,6 +1,7 @@
 
 package View;
 
+import Model.Difficulty;
 import Model.GameConfig;
 import Model.PlayerColor;
 
@@ -38,6 +39,8 @@ public final class GameSetupScreen extends JPanel {
             new JToggleButton[4][4];
     private final JPanel[] playerRows = new JPanel[4];
     private final JButton[] countButtons = new JButton[3];
+
+    private final ButtonGroup difficultyOptions = new ButtonGroup();
 
     private final JLabel errorLabel = new JLabel(" ");
 
@@ -104,34 +107,21 @@ public final class GameSetupScreen extends JPanel {
         );
         difficulty.setPreferredSize(new Dimension(850, 48));
 
-        JButton easy = new RoyalButton(
-                "Easy",
-                SOFT_GOLD,
-                GOLD,
-                new Color(255, 237, 191)
-        );
-
-        JButton medium = new RoyalButton(
-                "Medium  ·  Soon",
-                new Color(62, 33, 86),
-                new Color(169, 118, 80),
-                new Color(62, 33, 86)
-        );
-
-        JButton hard = new RoyalButton(
-                "Hard  ·  Soon",
-                new Color(62, 33, 86),
-                new Color(169, 118, 80),
-                new Color(62, 33, 86)
-        );
-
-        medium.setEnabled(false);
-        hard.setEnabled(false);
-
-        easy.setForeground(new Color(42, 21, 62));
-        difficulty.add(easy);
-        difficulty.add(medium);
-        difficulty.add(hard);
+        for (Difficulty option : Difficulty.values()) {
+            RoyalButton button = new RoyalButton(option.getDisplayName(),
+                    new Color(62, 33, 86), new Color(169, 118, 80), new Color(62, 33, 86));
+            button.setModel(new JToggleButton.ToggleButtonModel());
+            button.setActionCommand(option.name());
+            button.setEnabled(option.isBoardAvailable());
+            if (!option.isBoardAvailable()) {
+                button.setToolTipText("The " + option.getDisplayName() + " board layout is unavailable.");
+            }
+            difficultyOptions.add(button);
+            button.addItemListener(event -> button.setForeground(button.isSelected() ? NAVY : IVORY));
+            button.addActionListener(event -> clearError());
+            button.setSelected(option == Difficulty.EASY);
+            difficulty.add(button);
+        }
 
         content.add(difficulty);
         content.add(Box.createVerticalStrut(8));
@@ -618,7 +608,8 @@ countRow.setPreferredSize(new Dimension(850, 48));
             );
         }
 
-        return new GameConfig(slots);
+        Difficulty difficulty = Difficulty.valueOf(difficultyOptions.getSelection().getActionCommand());
+        return new GameConfig(slots, difficulty);
     }
 
     public void showError(String message) {
@@ -820,18 +811,18 @@ countRow.setPreferredSize(new Dimension(850, 48));
             Graphics2D g = (Graphics2D)graphics.create();
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             int w = getWidth(), h = getHeight();
-            Color a = isEnabled() ? top : new Color(67, 45, 84);
-            Color b = isEnabled() ? bottom : new Color(40, 26, 64);
+            Color a = isSelected() ? SOFT_GOLD : isEnabled() ? top : new Color(67, 45, 84);
+            Color b = isSelected() ? new Color(255, 237, 191) : isEnabled() ? bottom : new Color(40, 26, 64);
             g.setPaint(new GradientPaint(0, 3, a, 0, h, b));
             g.fillRoundRect(3, 3, w-6, h-6, 15, 15);
-            g.setColor(isEnabled() ? edge : new Color(129, 96, 118));
+            g.setColor(isSelected() ? GOLD : isEnabled() ? edge : new Color(129, 96, 118));
             g.setStroke(new BasicStroke(getModel().isRollover() && isEnabled() ? 2f : 1.2f));
             g.drawRoundRect(3, 3, w-7, h-7, 15, 15);
             g.setColor(new Color(255, 229, 171, 55));
             g.drawRoundRect(6, 6, w-13, h-13, 12, 12);
             g.dispose();
             super.paintComponent(graphics);
-            if ("Easy".equals(getText())) {
+            if (isSelected()) {
                 Graphics2D check = (Graphics2D) graphics.create();
                 check.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 check.setColor(new Color(42, 21, 62));

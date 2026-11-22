@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Easy-game state and turn order. Players act in the order they were added.
+ * Game state and turn order. Players act in the order they were added.
  * A six grants another roll unless the player has finished. Finished players
  * are skipped; play ends once only one player remains unfinished.
  */
@@ -12,6 +12,7 @@ public final class Game {
 
     private final List<Player> players;
     private final Dice dice;
+    private final BoardGeometry boardGeometry;
     private final List<Player> finishOrder = new ArrayList<>();
     private boolean over;
     private int currentIndex;
@@ -23,6 +24,7 @@ public final class Game {
     private Game(List<Player> players, Dice dice) {
         this.players = List.copyOf(players);
         this.dice = dice;
+        this.boardGeometry = players.get(0).getBoardGeometry();
     }
 
     public static Game start(GameConfig config, Dice dice) {
@@ -30,6 +32,10 @@ public final class Game {
             throw new IllegalArgumentException("Dice are required.");
         }
         return new Game(MatchSetup.createPlayers(config), dice);
+    }
+
+    public BoardGeometry getBoardGeometry() {
+        return boardGeometry;
     }
 
     public List<Player> getPlayers() {
@@ -118,7 +124,7 @@ public final class Game {
 
     private void captureOpponent(Piece moved) {
         if (moved.getLocation() != PieceLocation.TRACK
-                || BoardGeometry.isProtected(moved.getTrackIndex())) {
+                || boardGeometry.isProtectedSquare(moved.getTrackIndex())) {
             return;
         }
         List<Piece> opponents = new ArrayList<>();
