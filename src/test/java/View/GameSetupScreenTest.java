@@ -43,11 +43,9 @@ class GameSetupScreenTest {
             assertEquals(Difficulty.EASY, setup.readConfig().getDifficultyLevel());
             JButton easy = button(setup, "Easy"::equals);
             JButton medium = button(setup, "Medium"::equals);
-            JButton hard = button(setup, "Hard"::equals);
             JButton start = button(setup, text -> text.startsWith("Start Game"));
 
             assertTrue(easy.isSelected());
-            assertFalse(hard.isEnabled());
             medium.doClick(0);
             assertTrue(medium.isSelected());
             assertFalse(easy.isSelected());
@@ -88,6 +86,27 @@ class GameSetupScreenTest {
             easy.doClick(0);
             start.doClick(0);
             assertEquals(Difficulty.EASY, started.get().getBoardGeometry().getDifficulty());
+        });
+    }
+
+    @Test
+    void disabledHardButtonCannotChangeWhichBoardStarts() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            GameSetupScreen setup = new GameSetupScreen();
+            AtomicReference<Game> started = new AtomicReference<>();
+            setup.setOnStart(() -> started.set(Game.start(setup.readConfig(), Dice.scripted(6))));
+
+            JButton medium = button(setup, "Medium"::equals);
+            JButton hard = button(setup, "Hard"::equals);
+            medium.doClick(0);
+            assertFalse(hard.isEnabled());
+            hard.doClick(0);
+
+            assertFalse(hard.isSelected());
+            assertTrue(medium.isSelected());
+            assertNull(started.get());
+            button(setup, text -> text.startsWith("Start Game")).doClick(0);
+            assertEquals(Difficulty.MEDIUM, started.get().getBoardGeometry().getDifficulty());
         });
     }
 

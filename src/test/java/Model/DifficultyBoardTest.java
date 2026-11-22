@@ -20,15 +20,22 @@ class DifficultyBoardTest {
             new GameConfig.Slot("Blue player", PlayerColor.BLUE));
 
     @Test
-    void legacyConfigurationUsesEasyAndUnavailableHardIsRejected() {
+    void legacyConfigurationDefaultsToEasy() {
         GameConfig config = new GameConfig(SLOTS);
         assertEquals("Easy", config.getDifficulty());
         assertSame(BoardGeometry.easy(), Game.start(config, Dice.scripted(6)).getBoardGeometry());
-
-        GameConfig hard = new GameConfig(SLOTS, Difficulty.HARD);
-        assertFalse(GameConfigValidator.validate(hard).isValid());
-        assertThrows(IllegalArgumentException.class, () -> Game.start(hard, Dice.scripted(6)));
         assertFalse(GameConfigValidator.validate(new GameConfig(SLOTS, null)).isValid());
+    }
+
+    @Test
+    void gameStartupReportsMissingHardLayoutForAnOtherwiseValidConfiguration() {
+        GameConfig hard = new GameConfig(SLOTS, Difficulty.HARD);
+        ValidationResult validation = GameConfigValidator.validate(hard);
+        assertFalse(validation.isValid());
+        assertEquals("The Hard board layout is unavailable.", validation.getMessage());
+
+        var failure = assertThrows(IllegalArgumentException.class, () -> Game.start(hard, Dice.scripted(6)));
+        assertEquals(validation.getMessage(), failure.getMessage());
     }
 
     @Test
