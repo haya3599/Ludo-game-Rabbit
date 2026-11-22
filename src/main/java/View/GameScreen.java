@@ -648,6 +648,13 @@ public final class GameScreen extends JPanel {
         JLabel elapsed = caption("Elapsed Time: " + timeLabel.getText());
         results.add(elapsed);
         results.add(Box.createVerticalStrut(24));
+
+        JPanel rankingRows = new JPanel(new GridBagLayout());
+        rankingRows.setOpaque(false);
+        GridBagConstraints rowConstraints = new GridBagConstraints();
+        rowConstraints.gridwidth = GridBagConstraints.REMAINDER;
+        rowConstraints.anchor = GridBagConstraints.WEST;
+        rowConstraints.insets = new Insets(0, 0, 16, 0);
         for (int index = 0; index < rankings.size(); index++) {
             Player player = rankings.get(index);
             JLabel row = new JLabel((index + 1) + ".  " + player.getName()
@@ -655,10 +662,23 @@ public final class GameScreen extends JPanel {
                     + (player.isFinished() ? " — Finished" : " — Remaining player"));
             row.setFont(new Font("SansSerif", Font.BOLD, 21));
             row.setForeground(index == 0 ? LIGHT_GOLD : SOFT);
-            center(row);
-            results.add(row);
-            results.add(Box.createVerticalStrut(16));
+            rankingRows.add(row, rowConstraints);
         }
+
+        JScrollPane rankingScroll = new JScrollPane(rankingRows,
+                JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        rankingScroll.setBorder(null);
+        rankingScroll.setOpaque(false);
+        rankingScroll.getViewport().setOpaque(false);
+        rankingScroll.setAlignmentX(Component.CENTER_ALIGNMENT);
+        Dimension rankingSize = rankingScroll.getPreferredSize();
+        // Reserve space so a scrollbar never covers a ranking row.
+        rankingSize.height += rankingScroll.getHorizontalScrollBar().getPreferredSize().height;
+        rankingScroll.setPreferredSize(rankingSize);
+        rankingScroll.setMinimumSize(new Dimension(0, rankingSize.height));
+        rankingScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, rankingSize.height));
+        results.add(rankingScroll);
+
         JButton home = new RoyalButton("Back to Home", true);
         fixed(home, 260, 52);
         home.addActionListener(event -> onLeave.run());
@@ -667,7 +687,10 @@ public final class GameScreen extends JPanel {
 
         removeAll();
         setLayout(new GridBagLayout());
-        add(results);
+        GridBagConstraints resultsConstraints = new GridBagConstraints();
+        resultsConstraints.weightx = 1;
+        resultsConstraints.fill = GridBagConstraints.HORIZONTAL;
+        add(results, resultsConstraints);
         revalidate();
         repaint();
     }
