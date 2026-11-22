@@ -1,20 +1,14 @@
 package Model;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
-/**
- * Easy-board geometry used by movement and by the Swing view.
- *
- * <p>The course images were not stored in this repository. This class follows
- * the written Easy specification: a 15 by 15 cross, a clockwise 52-square main
- * track, and six home-lane squares for each colour. Start squares are 13
- * apart. Red begins at the bottom-left of the cross, then Green, Yellow, and
- * Blue. The arrow square is the last main-track square of a colour's route,
- * two squares before that colour would return to its start. The next six steps
- * are the home lane. Verify these coordinates against the SRS figures if the
- * course later supplies them in the repository.
- */
+/** Immutable board geometry and piece routes for one match. */
 public final class BoardGeometry {
 
     public static final int GRID_SIZE = 15;
@@ -64,7 +58,212 @@ public final class BoardGeometry {
             PlayerColor.BLUE, new GridPoint(9, 9)
     );
 
-    private BoardGeometry() {
+    private static final BoardGeometry EASY = createEasy();
+
+    private final Difficulty difficulty;
+    private final int gridSize;
+    private final List<GridPoint> track;
+    private final Map<PlayerColor, List<GridPoint>> homeLanes;
+    private final Map<PlayerColor, List<GridPoint>> castleSlots;
+    private final Map<PlayerColor, GridPoint> yardOrigins;
+    private final Map<PlayerColor, List<Integer>> routes = new EnumMap<>(PlayerColor.class);
+    private final Map<Integer, PlayerColor> starts = new HashMap<>();
+    private final Map<Integer, Arrow> arrows = new HashMap<>();
+    private final Map<Integer, SpecialSquare> specialSquares = new HashMap<>();
+
+    private BoardGeometry(Difficulty difficulty, int gridSize, List<List<GridPoint>> rings,
+                          Map<PlayerColor, GridPoint> startCells, Map<PlayerColor, List<GridPoint>> arrowCells,
+                          Map<PlayerColor, List<GridPoint>> homeLanes, Map<PlayerColor, List<GridPoint>> castleSlots,
+                          Map<PlayerColor, GridPoint> yardOrigins) {
+        this.difficulty = difficulty;
+        this.gridSize = gridSize;
+        this.track = rings.stream().flatMap(List::stream).toList();
+        this.homeLanes = Map.copyOf(homeLanes);
+        this.castleSlots = Map.copyOf(castleSlots);
+        this.yardOrigins = Map.copyOf(yardOrigins);
+
+        for (PlayerColor color : PlayerColor.values()) {
+            GridPoint entry = startCells.get(color);
+            starts.put(track.indexOf(entry), color);
+            List<GridPoint> exits = arrowCells.get(color);
+            GridPoint innerArrow = exits.get(exits.size() - 1);
+            GridPoint firstHome = homeLanes.get(color).get(0);
+            int dx = firstHome.column() - innerArrow.column();
+            int dy = firstHome.row() - innerArrow.row();
+            List<Integer> route = new ArrayList<>();
+            int offset = 0;
+            for (int ringIndex = 0; ringIndex < rings.size(); ringIndex++) {
+                List<GridPoint> ring = rings.get(ringIndex);
+                GridPoint exit = exits.get(ringIndex);
+                int first = ring.indexOf(entry);
+                int last = ring.indexOf(exit);
+                if (first < 0 || last < 0) {
+                    throw new IllegalArgumentException("Start or arrow does not connect to the track.");
+                }
+                int steps = Math.floorMod(last - first, ring.size());
+                for (int step = 0; step <= steps; step++) {
+                    route.add(offset + (first + step) % ring.size());
+                }
+                entry = new GridPoint(exit.column() + dx, exit.row() + dy);
+                arrows.put(offset + last, new Arrow(color, entry));
+                offset += ring.size();
+            }
+            routes.put(color, List.copyOf(route));
+        }
+    }
+
+    static BoardGeometry forDifficulty(Difficulty difficulty, Random random) {
+        return switch (difficulty) {
+            case EASY -> EASY;
+            case MEDIUM -> createMedium(random);
+            case HARD -> throw new IllegalArgumentException("The Hard board layout is unavailable.");
+        };
+    }
+
+    private static BoardGeometry createEasy() {
+        Map<PlayerColor, GridPoint> starts = new EnumMap<>(PlayerColor.class);
+        Map<PlayerColor, List<GridPoint>> arrows = new EnumMap<>(PlayerColor.class);
+        for (PlayerColor color : PlayerColor.values()) {
+            starts.put(color, TRACK.get(color.getStartIndex()));
+            arrows.put(color, List.of(TRACK.get(arrowIndex(color))));
+        }
+        BoardGeometry board = new BoardGeometry(Difficulty.EASY, GRID_SIZE, List.of(TRACK), starts, arrows,
+                HOME_LANES, CASTLE_SLOTS, YARD_ORIGINS);
+        for (int index = 0; index < TRACK.size(); index++) {
+            if (starColor(index) != null) {
+                board.specialSquares.put(index, SpecialSquare.STAR);
+            }
+        }
+        return board;
+    }
+
+    private static BoardGeometry createMedium(Random random) {
+        // Ludo Project, p. 2: a 64-square perimeter surrounds the 15 by 15 inner board.
+        int gridSize = GRID_SIZE + 2;
+        Map<PlayerColor, GridPoint> starts = Map.of(
+                PlayerColor.RED, new GridPoint(0, 0), PlayerColor.GREEN, new GridPoint(16, 0),
+                PlayerColor.YELLOW, new GridPoint(16, 16), PlayerColor.BLUE, new GridPoint(0, 16));
+        Map<PlayerColor, GridPoint> outerArrows = Map.of(
+                PlayerColor.RED, new GridPoint(0, 7), PlayerColor.GREEN, new GridPoint(9, 0),
+                PlayerColor.YELLOW, new GridPoint(16, 9), PlayerColor.BLUE, new GridPoint(7, 16));
+
+        // The Medium figure assigns the inner yards clockwise from red at the top left.
+        Map<PlayerColor, PlayerColor> easyColors = Map.of(
+                PlayerColor.RED, PlayerColor.GREEN, PlayerColor.GREEN, PlayerColor.YELLOW,
+                PlayerColor.YELLOW, PlayerColor.BLUE, PlayerColor.BLUE, PlayerColor.RED);
+        Map<PlayerColor, List<GridPoint>> arrows = new EnumMap<>(PlayerColor.class);
+        Map<PlayerColor, List<GridPoint>> homeLanes = new EnumMap<>(PlayerColor.class);
+        Map<PlayerColor, List<GridPoint>> castleSlots = new EnumMap<>(PlayerColor.class);
+        Map<PlayerColor, GridPoint> yards = new EnumMap<>(PlayerColor.class);
+        for (PlayerColor color : PlayerColor.values()) {
+            PlayerColor easyColor = easyColors.get(color);
+            arrows.put(color, List.of(outerArrows.get(color), inset(TRACK.get(arrowIndex(easyColor)))));
+            homeLanes.put(color, HOME_LANES.get(easyColor).stream().map(BoardGeometry::inset).toList());
+            castleSlots.put(color, CASTLE_SLOTS.get(easyColor).stream().map(BoardGeometry::inset).toList());
+            yards.put(color, inset(YARD_ORIGINS.get(easyColor)));
+        }
+        List<GridPoint> innerTrack = TRACK.stream().map(BoardGeometry::inset).toList();
+        BoardGeometry board = new BoardGeometry(Difficulty.MEDIUM, gridSize, List.of(perimeter(gridSize), innerTrack),
+                starts, arrows, homeLanes, castleSlots, yards);
+        board.placeSpecialSquares(random);
+        return board;
+    }
+
+    private static GridPoint inset(GridPoint point) {
+        return new GridPoint(point.column() + 1, point.row() + 1);
+    }
+
+    private static List<GridPoint> perimeter(int gridSize) {
+        List<GridPoint> cells = new ArrayList<>();
+        int last = gridSize - 1;
+        for (int i = 0; i < last; i++) cells.add(new GridPoint(i, 0));
+        for (int i = 0; i < last; i++) cells.add(new GridPoint(last, i));
+        for (int i = last; i > 0; i--) cells.add(new GridPoint(i, last));
+        for (int i = last; i > 0; i--) cells.add(new GridPoint(0, i));
+        return cells;
+    }
+
+    private void placeSpecialSquares(Random random) {
+        List<Integer> available = new ArrayList<>();
+        for (int index = 0; index < track.size(); index++) {
+            if (!starts.containsKey(index) && !arrows.containsKey(index)) {
+                available.add(index);
+            }
+        }
+        Collections.shuffle(available, random);
+        List<SpecialSquare> required = new ArrayList<>(Collections.nCopies(8, SpecialSquare.STAR));
+        for (SpecialSquare square : List.of(SpecialSquare.EASY_QUESTION, SpecialSquare.MEDIUM_QUESTION,
+                SpecialSquare.HARD_QUESTION, SpecialSquare.SURPRISE)) {
+            required.addAll(Collections.nCopies(2, square));
+        }
+        for (int i = 0; i < required.size(); i++) {
+            specialSquares.put(available.get(i), required.get(i));
+        }
+    }
+
+    public Difficulty getDifficulty() {
+        return difficulty;
+    }
+
+    public int getGridSize() {
+        return gridSize;
+    }
+
+    public List<GridPoint> getTrack() {
+        return track;
+    }
+
+    public List<GridPoint> getHomeLane(PlayerColor color) {
+        return homeLanes.get(color);
+    }
+
+    public List<GridPoint> getCastleSlots(PlayerColor color) {
+        return castleSlots.get(color);
+    }
+
+    public GridPoint getYardOrigin(PlayerColor color) {
+        return yardOrigins.get(color);
+    }
+
+    public PlayerColor getStartingColor(int trackIndex) {
+        return starts.get(trackIndex);
+    }
+
+    public Arrow getArrow(int trackIndex) {
+        return arrows.get(trackIndex);
+    }
+
+    public SpecialSquare getSpecialSquare(int trackIndex) {
+        return specialSquares.get(trackIndex);
+    }
+
+    boolean isProtectedSquare(int trackIndex) {
+        SpecialSquare square = getSpecialSquare(trackIndex);
+        return square == SpecialSquare.STAR || square == SpecialSquare.SURPRISE
+                || (difficulty == Difficulty.MEDIUM && starts.containsKey(trackIndex));
+    }
+
+    int getTrackIndex(PlayerColor color, int progress) {
+        return routes.get(color).get(progress);
+    }
+
+    int getHomeEntryProgress(PlayerColor color) {
+        return routes.get(color).size();
+    }
+
+    int getMaxProgress(PlayerColor color) {
+        return getHomeEntryProgress(color) + getHomeLane(color).size() - 1;
+    }
+
+    public record Arrow(PlayerColor color, GridPoint destination) { }
+
+    public enum SpecialSquare {
+        STAR, EASY_QUESTION, MEDIUM_QUESTION, HARD_QUESTION, SURPRISE
+    }
+
+    // The original static accessors describe the Iteration 1 Easy board.
+    public static BoardGeometry easy() {
+        return EASY;
     }
 
     public static List<GridPoint> track() {
@@ -120,11 +319,13 @@ public final class BoardGeometry {
     }
 
     public static GridPoint cellFor(Piece piece) {
-        PlayerColor color = piece.getOwner().getColor();
+        Player owner = piece.getOwner();
+        BoardGeometry geometry = owner.getBoardGeometry();
+        PlayerColor color = owner.getColor();
         return switch (piece.getLocation()) {
-            case CASTLE -> castleSlots(color).get(piece.getIndex());
-            case TRACK -> TRACK.get(piece.getTrackIndex());
-            case HOME -> homeLane(color).get(piece.getHomeIndex());
+            case CASTLE -> geometry.getCastleSlots(color).get(piece.getIndex());
+            case TRACK -> geometry.getTrack().get(piece.getTrackIndex());
+            case HOME -> geometry.getHomeLane(color).get(piece.getHomeIndex());
         };
     }
 }

@@ -25,7 +25,7 @@ public final class BoardScreens {
 
     private static void open(AppController app, GameConfig config) {
         Game game = Game.start(config, Dice.random());
-        GameScreen screen = new GameScreen(game.getPlayers());
+        GameScreen screen = new GameScreen(game.getPlayers(), game.getBoardGeometry());
 
         new GameplayController(game, screen);
 

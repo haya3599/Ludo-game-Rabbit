@@ -7,7 +7,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Checks player count, names, and colours before an Easy game can start.
+ * Checks difficulty, player count, names, and colours before a game can start.
  */
 public final class GameConfigValidator {
 
@@ -20,6 +20,13 @@ public final class GameConfigValidator {
         }
 
         List<String> errors = new ArrayList<>();
+        Difficulty difficulty = config.getDifficultyLevel();
+        if (difficulty == null) {
+            errors.add("Choose a difficulty.");
+        } else if (!difficulty.isBoardAvailable()) {
+            errors.add("The " + difficulty.getDisplayName() + " board layout is unavailable.");
+        }
+
         int count = config.getPlayerCount();
         if (count < 2 || count > 4) {
             errors.add("Choose 2, 3, or 4 players.");

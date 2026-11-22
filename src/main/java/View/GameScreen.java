@@ -1,6 +1,7 @@
 
 package View;
 
+import Model.BoardGeometry;
 import Model.Piece;
 import Model.Player;
 import Model.PlayerColor;
@@ -12,6 +13,7 @@ import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 
 public final class GameScreen extends JPanel {
@@ -22,7 +24,7 @@ public final class GameScreen extends JPanel {
     private static final Color LIGHT_GOLD = new Color(255, 226, 158);
     private static final Color SOFT = new Color(225, 205, 230);
 
-    private final BoardPanel board = new BoardPanel();
+    private final BoardPanel board;
 
     private final JLabel turnLabel = new JLabel("Turn 1");
     private final JLabel playerLabel = new JLabel("Player 1");
@@ -44,13 +46,17 @@ public final class GameScreen extends JPanel {
     private Runnable onLeave = () -> {};
 
     public GameScreen(List<Player> players) {
+        this(players, BoardGeometry.easy());
+    }
+
+    public GameScreen(List<Player> players, BoardGeometry boardGeometry) {
+        board = new BoardPanel(boardGeometry);
         setLayout(new BorderLayout());
         setOpaque(false);
         setBorder(new EmptyBorder(15, 15, 15, 15));
 
         board.setPlayers(players);
 
-        // Board: original BoardPanel, unchanged.
         JPanel boardArea = new JPanel(new GridBagLayout());
         boardArea.setOpaque(false);
 
@@ -72,7 +78,7 @@ public final class GameScreen extends JPanel {
         JComponent emblem = createEmblem();
         emblem.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel mode = new JLabel("EASY GAME");
+        JLabel mode = new JLabel(boardGeometry.getDifficulty().getDisplayName().toUpperCase(Locale.ROOT) + " GAME");
         mode.setFont(new Font("Serif", Font.BOLD, 19));
         mode.setForeground(LIGHT_GOLD);
         center(mode);
