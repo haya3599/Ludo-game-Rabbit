@@ -1,7 +1,6 @@
 
 package Controller;
 
-import Model.Dice;
 import Model.Game;
 import Model.GameConfig;
 import View.GameScreen;
@@ -24,7 +23,7 @@ public final class BoardScreens {
     }
 
     private static void open(AppController app, GameConfig config) {
-        Game game = Game.start(config, Dice.random());
+        Game game = Game.start(config);
         GameScreen screen = new GameScreen(game.getPlayers(), game.getBoardGeometry());
 
         new GameplayController(game, screen);
