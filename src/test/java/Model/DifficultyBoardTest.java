@@ -152,7 +152,7 @@ class DifficultyBoardTest {
 
     @Test
     void mediumMovesCanCrossAnArrowAndStartingSquaresPreventCapture() {
-        Game game = Game.start(new GameConfig(SLOTS, Difficulty.MEDIUM), Dice.scripted(2));
+        Game game = Game.start(new GameConfig(SLOTS, Difficulty.MEDIUM), Dice.scripted(2), Dice.scripted(2));
         Piece attacker = game.getCurrentPlayer().getPieces().get(0);
         Piece defender = game.getPlayers().get(1).getPieces().get(0);
         attacker.placeAtProgress(14);

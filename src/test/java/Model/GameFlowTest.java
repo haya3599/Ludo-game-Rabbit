@@ -1,7 +1,11 @@
 package Model;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -226,6 +230,51 @@ class GameFlowTest {
             assertEquals(turn, game.getTurnNumber());
             assertTrue(game.getLegalPieces().isEmpty());
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {2, 3, 4})
+    void finalRankingsFollowFinishingOrderWhenPlayersFinishInReverseTurnOrder(int count) {
+        List<GameConfig.Slot> slots = players(
+                "A", PlayerColor.RED, "B", PlayerColor.BLUE,
+                "C", PlayerColor.GREEN, "D", PlayerColor.YELLOW).getSlots();
+        Game game = Game.start(new GameConfig(slots.subList(0, count)),
+                Dice.scripted(1, 1, 1, 1, 1, 1, 1, 1, 1));
+        List<Player> players = game.getPlayers();
+        List<Player> expectedRankings = new ArrayList<>(players);
+        Collections.reverse(expectedRankings);
+
+        for (int index = 0; index < count; index++) {
+            Player player = players.get(index);
+            List<Piece> pieces = player.getPieces();
+            for (Piece piece : pieces.subList(0, Player.PIECE_COUNT - 1)) {
+                piece.placeAtProgress(Piece.MAX_PROGRESS);
+            }
+            // Each later player needs one fewer turn to finish their last piece.
+            Piece last = pieces.get(Player.PIECE_COUNT - 1);
+            last.placeAtProgress(Piece.MAX_PROGRESS - (count - index));
+            assertEquals(PieceLocation.HOME, last.getLocation());
+            assertFalse(player.isFinished());
+        }
+        assertTrue(game.getRankings().isEmpty());
+
+        for (int active = count; active > 1; active--) {
+            for (int index = 0; index < active; index++) {
+                Player player = players.get(index);
+                assertEquals(player, game.getCurrentPlayer());
+                assertTrue(game.roll().isMovePending());
+                Piece last = player.getPieces().get(Player.PIECE_COUNT - 1);
+                assertEquals(ActionResult.OK, game.move(last));
+                assertEquals(index == active - 1, player.isFinished());
+            }
+            assertEquals(active == 2, game.isOver());
+            if (active > 2) {
+                assertEquals(expectedRankings.subList(0, count - active + 1), game.getRankings());
+            }
+        }
+
+        assertEquals(expectedRankings, game.getRankings());
+        assertFalse(players.get(0).isFinished());
     }
 
     @Test

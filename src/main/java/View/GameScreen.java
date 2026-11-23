@@ -2,6 +2,7 @@
 package View;
 
 import Model.BoardGeometry;
+import Model.DiceRoll;
 import Model.Piece;
 import Model.Player;
 import Model.PlayerColor;
@@ -29,8 +30,9 @@ public final class GameScreen extends JPanel {
     private final JLabel turnLabel = new JLabel("Turn 1");
     private final JLabel playerLabel = new JLabel("Player 1");
     private final JPanel colorChip = new JPanel();
-    private final JLabel diceCaption = new JLabel("Latest Roll");
-    private final DiceFacePanel diceFace = new DiceFacePanel();
+    private final DiceDisplay regularDice = new DiceDisplay("Regular Dice");
+    private final DiceDisplay multiplierDice;
+    private final JLabel movementResult = caption(" ");
     private final JLabel timeLabel = new JLabel("00:00");
     private final JTextArea message = new JTextArea("Roll the dice.");
 
@@ -51,6 +53,8 @@ public final class GameScreen extends JPanel {
 
     public GameScreen(List<Player> players, BoardGeometry boardGeometry) {
         board = new BoardPanel(boardGeometry);
+        String multiplierName = boardGeometry.getDifficulty().getMultiplierDieName();
+        multiplierDice = multiplierName == null ? null : new DiceDisplay(multiplierName);
         setLayout(new BorderLayout());
         setOpaque(false);
         setBorder(new EmptyBorder(15, 15, 15, 15));
@@ -88,12 +92,7 @@ public final class GameScreen extends JPanel {
         center(turnLabel);
 
         JLabel playerCaption = caption("Current Player");
-        JLabel rollCaption = diceCaption;
         JLabel elapsedCaption = caption("Elapsed Time");
-
-        diceCaption.setForeground(LIGHT_GOLD);
-        diceCaption.setFont(new Font("SansSerif", Font.BOLD, 14));
-        center(diceCaption);
 
         // Player information without rectangular plaque.
         JPanel playerRow = new JPanel(
@@ -111,31 +110,16 @@ public final class GameScreen extends JPanel {
 
         JPanel playerDecoration = decoratedRow(playerRow, 275, 45);
 
-        // Original DiceFacePanel remains interactive through controller.
-        JPanel diceFrame = new JPanel(new BorderLayout()) {
-            @Override
-            protected void paintComponent(Graphics graphics) {
-                Graphics2D g = quality(graphics);
-                int w = getWidth();
-                int h = getHeight();
-
-                g.setPaint(new GradientPaint(
-                        0, 0, LIGHT_GOLD,
-                        0, h, new Color(170, 105, 34)));
-                g.fillRoundRect(0, 0, w, h, 23, 23);
-                g.setColor(new Color(255, 221, 130, 90));
-                g.setStroke(new BasicStroke(2.0f));
-                g.drawRoundRect(1, 1, w - 3, h - 3, 23, 23);
-
-                g.setColor(new Color(38, 14, 56));
-                g.fillRoundRect(4, 4, w - 8, h - 8, 18, 18);
-                g.dispose();
-            }
-        };
-        diceFrame.setOpaque(false);
-        diceFrame.setBorder(new EmptyBorder(8, 8, 8, 8));
-        diceFrame.add(diceFace, BorderLayout.CENTER);
-        fixed(diceFrame, 104, 104);
+        JPanel diceRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 0));
+        diceRow.setOpaque(false);
+        diceRow.add(regularDice);
+        if (multiplierDice != null) {
+            diceRow.add(multiplierDice);
+        }
+        diceRow.setAlignmentX(Component.CENTER_ALIGNMENT);
+        diceRow.setMaximumSize(diceRow.getPreferredSize());
+        movementResult.setForeground(LIGHT_GOLD);
+        fixed(movementResult, 290, 20);
 
         // Timer with a fine ornamental divider, not a rectangle.
         timeLabel.setFont(new Font("Monospaced", Font.BOLD, 29));
@@ -165,7 +149,7 @@ public final class GameScreen extends JPanel {
         message.setFont(new Font("SansSerif", Font.PLAIN, 13));
         message.setForeground(SOFT);
         message.setRows(2);
-        fixed(message, 290, 24);
+        fixed(message, 290, 34);
         message.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Compact, predictable layout: no vertical glue between controls.
@@ -183,9 +167,11 @@ public final class GameScreen extends JPanel {
         side.add(playerDecoration);
         side.add(Box.createVerticalStrut(6));
 
-        side.add(rollCaption);
-        side.add(Box.createVerticalStrut(4));
-        side.add(diceFrame);
+        side.add(diceRow);
+        if (multiplierDice != null) {
+            side.add(Box.createVerticalStrut(4));
+            side.add(movementResult);
+        }
         side.add(Box.createVerticalStrut(6));
 
         side.add(elapsedCaption);
@@ -209,20 +195,14 @@ public final class GameScreen extends JPanel {
         side.add(Box.createVerticalGlue());
         side.add(Box.createVerticalStrut(10));
 
-        // Overlay the back button over the EMPTY top-left margin.
-        // BoardPanel remains centered and its mouse interactions are preserved.
-        JPanel boardWithBack = new JPanel(null) {
-            @Override
-            public void doLayout() {
-                boardArea.setBounds(0, 0, getWidth(), getHeight());
-                leaveButton.setBounds(4, 4, 148, 34);
-                boardArea.doLayout();
-            }
-        };
+        JPanel backRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 4));
+        backRow.setOpaque(false);
+        backRow.add(leaveButton);
+
+        JPanel boardWithBack = new JPanel(new BorderLayout());
         boardWithBack.setOpaque(false);
-        boardWithBack.add(boardArea);
-        boardWithBack.add(leaveButton);
-        boardWithBack.setComponentZOrder(leaveButton, 0);
+        boardWithBack.add(backRow, BorderLayout.NORTH);
+        boardWithBack.add(boardArea, BorderLayout.CENTER);
 
         JPanel mainArea = new JPanel(new BorderLayout(12, 0));
         mainArea.setOpaque(false);
@@ -237,6 +217,60 @@ public final class GameScreen extends JPanel {
         clock = new Timer(1000, e -> updateClock());
         clock.setInitialDelay(0);
         clock.start();
+    }
+
+    private static final class DiceDisplay extends JPanel {
+        private final String name;
+        private final JLabel label;
+        private final DiceFacePanel face = new DiceFacePanel();
+
+        private DiceDisplay(String name) {
+            this.name = name;
+            setOpaque(false);
+            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
+            label = caption(name);
+            label.setForeground(LIGHT_GOLD);
+            label.setFont(new Font("SansSerif", Font.BOLD, 14));
+            label.setLabelFor(face);
+            add(label);
+            add(Box.createVerticalStrut(4));
+
+            JPanel frame = new JPanel(new BorderLayout()) {
+                @Override
+                protected void paintComponent(Graphics graphics) {
+                    Graphics2D g = quality(graphics);
+                    int w = getWidth();
+                    int h = getHeight();
+
+                    g.setPaint(new GradientPaint(
+                            0, 0, LIGHT_GOLD,
+                            0, h, new Color(170, 105, 34)));
+                    g.fillRoundRect(0, 0, w, h, 23, 23);
+                    g.setColor(new Color(255, 221, 130, 90));
+                    g.setStroke(new BasicStroke(2.0f));
+                    g.drawRoundRect(1, 1, w - 3, h - 3, 23, 23);
+
+                    g.setColor(new Color(38, 14, 56));
+                    g.fillRoundRect(4, 4, w - 8, h - 8, 18, 18);
+                    g.dispose();
+                }
+            };
+            frame.setOpaque(false);
+            frame.setBorder(new EmptyBorder(8, 8, 8, 8));
+            frame.add(face, BorderLayout.CENTER);
+            fixed(frame, 104, 104);
+            add(frame);
+            fixed(this, 132, label.getPreferredSize().height + 4 + frame.getPreferredSize().height);
+            setValue(0);
+        }
+
+        private void setValue(int value) {
+            face.setValue(value);
+            String text = value == 0 ? name : name + ": " + value;
+            label.setText(text);
+            face.getAccessibleContext().setAccessibleName(text);
+        }
     }
 
     private JComponent createEmblem() {
@@ -580,7 +614,7 @@ public final class GameScreen extends JPanel {
         if (player == null) return;
 
         if (displayedPlayer != player) {
-            setDiceValue(0);
+            setDiceRoll(null);
             displayedPlayer = player;
         }
 
@@ -594,11 +628,18 @@ public final class GameScreen extends JPanel {
         colorChip.setToolTipText(color.getDisplayName());
     }
 
-    public void setDiceValue(int diceValue) {
-        diceFace.setValue(diceValue);
-        diceCaption.setText(diceValue == 0
-                ? "Latest Roll"
-                : "Latest Roll: " + diceValue);
+    public void setDiceRoll(DiceRoll roll) {
+        regularDice.setValue(roll == null ? 0 : roll.regularValue());
+        if (multiplierDice != null) {
+            multiplierDice.setValue(roll == null ? 0 : roll.multiplierValue());
+            if (roll == null || !roll.hasMultiplier()) {
+                movementResult.setText(" ");
+            } else {
+                int steps = roll.movementSteps();
+                movementResult.setText("%d × (%d − 1) = %d %s".formatted(
+                        roll.regularValue(), roll.multiplierValue(), steps, steps == 1 ? "step" : "steps"));
+            }
+        }
     }
 
     public void setMessage(String text) {
@@ -654,6 +695,13 @@ public final class GameScreen extends JPanel {
         JLabel elapsed = caption("Elapsed Time: " + timeLabel.getText());
         results.add(elapsed);
         results.add(Box.createVerticalStrut(24));
+
+        JPanel rankingRows = new JPanel(new GridBagLayout());
+        rankingRows.setOpaque(false);
+        GridBagConstraints rowConstraints = new GridBagConstraints();
+        rowConstraints.gridwidth = GridBagConstraints.REMAINDER;
+        rowConstraints.anchor = GridBagConstraints.WEST;
+        rowConstraints.insets = new Insets(0, 0, 16, 0);
         for (int index = 0; index < rankings.size(); index++) {
             Player player = rankings.get(index);
             JLabel row = new JLabel((index + 1) + ".  " + player.getName()
@@ -661,10 +709,23 @@ public final class GameScreen extends JPanel {
                     + (player.isFinished() ? " — Finished" : " — Remaining player"));
             row.setFont(new Font("SansSerif", Font.BOLD, 21));
             row.setForeground(index == 0 ? LIGHT_GOLD : SOFT);
-            center(row);
-            results.add(row);
-            results.add(Box.createVerticalStrut(16));
+            rankingRows.add(row, rowConstraints);
         }
+
+        JScrollPane rankingScroll = new JScrollPane(rankingRows,
+                JScrollPane.VERTICAL_SCROLLBAR_NEVER, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        rankingScroll.setBorder(null);
+        rankingScroll.setOpaque(false);
+        rankingScroll.getViewport().setOpaque(false);
+        rankingScroll.setAlignmentX(Component.CENTER_ALIGNMENT);
+        Dimension rankingSize = rankingScroll.getPreferredSize();
+        // Reserve space so a scrollbar never covers a ranking row.
+        rankingSize.height += rankingScroll.getHorizontalScrollBar().getPreferredSize().height;
+        rankingScroll.setPreferredSize(rankingSize);
+        rankingScroll.setMinimumSize(new Dimension(0, rankingSize.height));
+        rankingScroll.setMaximumSize(new Dimension(Integer.MAX_VALUE, rankingSize.height));
+        results.add(rankingScroll);
+
         JButton home = new RoyalButton("Back to Home", true);
         fixed(home, 260, 52);
         home.addActionListener(event -> onLeave.run());
@@ -673,7 +734,10 @@ public final class GameScreen extends JPanel {
 
         removeAll();
         setLayout(new GridBagLayout());
-        add(results);
+        GridBagConstraints resultsConstraints = new GridBagConstraints();
+        resultsConstraints.weightx = 1;
+        resultsConstraints.fill = GridBagConstraints.HORIZONTAL;
+        add(results, resultsConstraints);
         revalidate();
         repaint();
     }

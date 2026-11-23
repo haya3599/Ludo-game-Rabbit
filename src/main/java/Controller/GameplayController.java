@@ -2,6 +2,7 @@
 package Controller;
 
 import Model.ActionResult;
+import Model.DiceRoll;
 import Model.Game;
 import Model.Piece;
 import Model.Player;
@@ -48,13 +49,12 @@ public final class GameplayController {
             return;
         }
 
-        int rolledValue = game.getLastRoll();
 
         if (game.getTurnNumber() != previousTurn) {
             delayTransition(
                 previousPlayer,
                 previousTurn,
-                rolledValue,
+                outcome.getDiceRoll(),
                 outcome.getMessage()
             );
         } else {
@@ -69,7 +69,6 @@ public final class GameplayController {
 
         Player previousPlayer = game.getCurrentPlayer();
         int previousTurn = game.getTurnNumber();
-        int previousRoll = game.getLastRoll();
 
         ActionResult result = game.move(piece);
 
@@ -90,7 +89,7 @@ public final class GameplayController {
             delayTransition(
                 previousPlayer,
                 previousTurn,
-                previousRoll,
+                game.getLastDiceRoll(),
                 "Turn passes to " + playerName + "."
             );
         } else if (game.getCurrentPlayer() == piece.getOwner()) {
@@ -103,7 +102,7 @@ public final class GameplayController {
     private void delayTransition(
             Player previousPlayer,
             int previousTurn,
-            int diceValue,
+            DiceRoll roll,
             String message) {
 
         transitioning = true;
@@ -115,7 +114,7 @@ public final class GameplayController {
         // Keep the previous player and dice visible together.
         screen.setTurnNumber(previousTurn);
         screen.setCurrentPlayer(previousPlayer);
-        screen.setDiceValue(diceValue);
+        screen.setDiceRoll(roll);
         screen.setMessage(message);
 
         screen.setRollEnabled(false);
@@ -144,11 +143,7 @@ public final class GameplayController {
         screen.setTurnNumber(currentTurn);
         screen.setCurrentPlayer(game.getCurrentPlayer());
 
-        if (turnChanged) {
-            screen.setDiceValue(0);
-        } else {
-            screen.setDiceValue(game.getLastRoll());
-        }
+        screen.setDiceRoll(turnChanged ? null : game.getLastDiceRoll());
 
         displayedTurnNumber = currentTurn;
 
