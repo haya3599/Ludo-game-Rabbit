@@ -1,6 +1,7 @@
 package View;
 
 import Model.BoardGeometry;
+import Model.Difficulty;
 import Model.GridPoint;
 import Model.Piece;
 import Model.Player;
@@ -25,11 +26,12 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 /**
- * Draws the Easy board from {@link BoardGeometry}. It does not decide whether
+ * Draws the match board from {@link BoardGeometry}. It does not decide whether
  * a move is legal; the controller reports which pieces may be selected.
  */
 public final class BoardPanel extends JPanel {
 
+    private final BoardGeometry geometry;
     private List<Player> players = List.of();
     private List<Piece> highlights = List.of();
     private Consumer<Piece> onPieceSelected = piece -> { };
@@ -38,6 +40,11 @@ public final class BoardPanel extends JPanel {
     private int cell;
 
     public BoardPanel() {
+        this(BoardGeometry.easy());
+    }
+
+    public BoardPanel(BoardGeometry geometry) {
+        this.geometry = geometry;
         setPreferredSize(new Dimension(780, 780));
         setOpaque(false);
         addMouseListener(new java.awt.event.MouseAdapter() {
@@ -72,7 +79,7 @@ public final class BoardPanel extends JPanel {
         Graphics2D g2 = (Graphics2D) graphics.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         // Warm pearl canvas, no black gutters.
-        int side = cell * BoardGeometry.GRID_SIZE;
+        int side = cell * geometry.getGridSize();
         g2.setColor(new Color(159, 120, 66, 30));
         g2.fillRoundRect(originX - 7, originY + 7, side + 14, side + 10, 24, 24);
         g2.setPaint(new GradientPaint(originX, originY, new Color(251, 247, 238),
@@ -91,8 +98,8 @@ public final class BoardPanel extends JPanel {
 
     private void updateLayout() {
         int available = Math.max(0, Math.min(getWidth(), getHeight()) - 24);
-        cell = Math.max(1, available / BoardGeometry.GRID_SIZE);
-        int used = cell * BoardGeometry.GRID_SIZE;
+        cell = Math.max(1, available / geometry.getGridSize());
+        int used = cell * geometry.getGridSize();
         originX = (getWidth() - used) / 2;
         originY = (getHeight() - used) / 2;
     }
@@ -100,7 +107,7 @@ public final class BoardPanel extends JPanel {
     /** Four richly colored enamel courts set into an ivory and brass board. */
     private void paintYards(Graphics2D g2) {
         for (PlayerColor color : PlayerColor.values()) {
-            GridPoint origin = BoardGeometry.yardOrigin(color);
+            GridPoint origin = geometry.getYardOrigin(color);
             int x = originX + origin.column() * cell;
             int y = originY + origin.row() * cell;
             int size = cell * BoardGeometry.YARD_SIZE;
@@ -195,29 +202,44 @@ public final class BoardPanel extends JPanel {
     }
 
     private void paintTrack(Graphics2D g2) {
-        List<GridPoint> track = BoardGeometry.track();
+        List<GridPoint> track = geometry.getTrack();
         for (int index = 0; index < track.size(); index++) {
-            PlayerColor start = BoardGeometry.startingColor(index);
+            GridPoint point = track.get(index);
+            PlayerColor start = geometry.getStartingColor(index);
             Color fill = start == null ? new Color(246, 238, 217) : royal(start);
-            fillCell(g2, track.get(index), fill, new Color(194, 152, 77));
+            fillCell(g2, point, fill, new Color(194, 152, 77));
             if (start != null) {
                 Color marker = start == PlayerColor.YELLOW ? new Color(29, 24, 22) : new Color(255, 231, 167);
-                drawMarker(g2, track.get(index), "#", marker);
+                drawMarker(g2, point, "#", marker);
             }
-            PlayerColor star = BoardGeometry.starColor(index);
-            if (star != null) {
-                drawMarker(g2, track.get(index), "★", royal(star));
+            BoardGeometry.SpecialSquare special = geometry.getSpecialSquare(index);
+            if (special != null) {
+                paintSpecialSquare(g2, point, index, special);
             }
-            PlayerColor arrow = BoardGeometry.arrowColor(index);
+            BoardGeometry.Arrow arrow = geometry.getArrow(index);
             if (arrow != null) {
-                drawArrow(g2, track.get(index), arrow);
+                drawArrow(g2, point, arrow);
             }
+        }
+    }
+
+    private void paintSpecialSquare(Graphics2D g2, GridPoint point, int index, BoardGeometry.SpecialSquare special) {
+        switch (special) {
+            case STAR -> {
+                Color color = geometry.getDifficulty() == Difficulty.EASY
+                        ? royal(BoardGeometry.starColor(index)) : new Color(95, 68, 37);
+                drawMarker(g2, point, "★", color);
+            }
+            case EASY_QUESTION -> drawMarker(g2, point, "?", royal(PlayerColor.GREEN));
+            case MEDIUM_QUESTION -> drawMarker(g2, point, "?", royal(PlayerColor.YELLOW));
+            case HARD_QUESTION -> drawMarker(g2, point, "?", royal(PlayerColor.RED));
+            case SURPRISE -> drawMarker(g2, point, "!", new Color(87, 40, 127));
         }
     }
 
     private void paintHomeLanes(Graphics2D g2) {
         for (PlayerColor color : PlayerColor.values()) {
-            List<GridPoint> lane = BoardGeometry.homeLane(color);
+            List<GridPoint> lane = geometry.getHomeLane(color);
             for (int index = 0; index < lane.size(); index++) {
                 Color fill = index == lane.size() - 1 ? royal(color) : mix(royal(color), Color.WHITE, .28);
                 fillCell(g2, lane.get(index), fill, new Color(194, 152, 77));
@@ -227,10 +249,9 @@ public final class BoardPanel extends JPanel {
 
     /** Four enamel triangles and a crowned gold medallion at the finish. */
     private void paintCenter(Graphics2D g2) {
-        // The full 3x3 central square (not only the single middle cell).
-        // BoardGeometry stays unchanged; this is purely a visual overlay.
-        int x = originX + 6 * cell;
-        int y = originY + 6 * cell;
+        int middle = geometry.getGridSize() / 2;
+        int x = originX + (middle - 1) * cell;
+        int y = originY + (middle - 1) * cell;
         int size = 3 * cell;
         int cx = x + size / 2;
         int cy = y + size / 2;
@@ -240,10 +261,13 @@ public final class BoardPanel extends JPanel {
         c.setColor(new Color(83, 53, 24, 65));
         c.fillRect(x + 2, y + 3, size, size);
 
-        Color[] colors = {
-            royal(PlayerColor.YELLOW), royal(PlayerColor.BLUE),
-            royal(PlayerColor.RED), royal(PlayerColor.GREEN)
-        };
+        Color[] colors = new Color[4];
+        for (PlayerColor color : PlayerColor.values()) {
+            List<GridPoint> lane = geometry.getHomeLane(color);
+            GridPoint end = lane.get(lane.size() - 1);
+            int side = end.row() < middle ? 0 : end.column() > middle ? 1 : end.row() > middle ? 2 : 3;
+            colors[side] = royal(color);
+        }
         int[][] edges = {
             {x, y, x + size, y},
             {x + size, y, x + size, y + size},
@@ -399,36 +423,19 @@ public final class BoardPanel extends JPanel {
         g2.drawString(text, x, y);
     }
 
-    private void drawArrow(Graphics2D g2, GridPoint point, PlayerColor color) {
+    private void drawArrow(Graphics2D g2, GridPoint point, BoardGeometry.Arrow arrow) {
         int cx = originX + point.column() * cell + cell / 2;
         int cy = originY + point.row() * cell + cell / 2;
         int arm = Math.max(4, cell / 5);
-        Path2D arrow = new Path2D.Double();
-        switch (color) {
-            case RED -> {
-                arrow.moveTo(cx, cy - arm);
-                arrow.lineTo(cx - arm, cy + arm);
-                arrow.lineTo(cx + arm, cy + arm);
-            }
-            case GREEN -> {
-                arrow.moveTo(cx + arm, cy);
-                arrow.lineTo(cx - arm, cy - arm);
-                arrow.lineTo(cx - arm, cy + arm);
-            }
-            case YELLOW -> {
-                arrow.moveTo(cx, cy + arm);
-                arrow.lineTo(cx - arm, cy - arm);
-                arrow.lineTo(cx + arm, cy - arm);
-            }
-            case BLUE -> {
-                arrow.moveTo(cx - arm, cy);
-                arrow.lineTo(cx + arm, cy - arm);
-                arrow.lineTo(cx + arm, cy + arm);
-            }
-        }
-        arrow.closePath();
-        g2.setColor(awt(color).darker());
-        g2.fill(arrow);
+        int dx = (arrow.destination().column() - point.column()) * arm;
+        int dy = (arrow.destination().row() - point.row()) * arm;
+        Path2D shape = new Path2D.Double();
+        shape.moveTo(cx + dx, cy + dy);
+        shape.lineTo(cx - dx - dy, cy - dy + dx);
+        shape.lineTo(cx - dx + dy, cy - dy - dx);
+        shape.closePath();
+        g2.setColor(awt(arrow.color()).darker());
+        g2.fill(shape);
     }
 
     private Map<GridPoint, List<Piece>> groupPieces() {

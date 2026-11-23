@@ -5,15 +5,21 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Settings chosen before an Easy game starts. Difficulty is fixed for Iteration 1.
+ * Settings chosen before a game starts.
  */
 public final class GameConfig {
 
     public static final String DIFFICULTY = "Easy";
 
     private final List<Slot> slots;
+    private final Difficulty difficulty;
 
     public GameConfig(List<Slot> slots) {
+        this(slots, Difficulty.EASY);
+    }
+
+    public GameConfig(List<Slot> slots, Difficulty difficulty) {
+        this.difficulty = difficulty;
         this.slots = new ArrayList<>();
         if (slots != null) {
             this.slots.addAll(slots);
@@ -21,7 +27,11 @@ public final class GameConfig {
     }
 
     public String getDifficulty() {
-        return DIFFICULTY;
+        return difficulty == null ? null : difficulty.getDisplayName();
+    }
+
+    public Difficulty getDifficultyLevel() {
+        return difficulty;
     }
 
     public List<Slot> getSlots() {

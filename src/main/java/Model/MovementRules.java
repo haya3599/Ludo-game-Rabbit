@@ -1,9 +1,9 @@
 package Model;
 
 /**
- * Iteration 1 movement. A castle piece leaves only on a roll of 6 and stops on
+ * A castle piece leaves only on a roll of 6 and stops on
  * the coloured start square. A piece already on the route moves that many
- * steps. Steps that pass the colour's arrow enter its six-square home lane.
+ * steps. A matching arrow leads to the next inner track or to the six-square home lane.
  * A move that would pass the final home square is illegal.
  *
  * <p>Game resolves captures and protected squares after movement.
@@ -20,7 +20,7 @@ public final class MovementRules {
         if (piece.getLocation() == PieceLocation.CASTLE) {
             return dice == 6;
         }
-        return piece.getProgress() + dice <= Piece.MAX_PROGRESS;
+        return piece.getProgress() + dice <= piece.maxProgress();
     }
 
     public static void apply(Piece piece, int dice) {
