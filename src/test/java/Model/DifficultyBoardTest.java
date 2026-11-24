@@ -176,6 +176,150 @@ class DifficultyBoardTest {
         assertEquals(2, attacker.getHomeIndex());
     }
 
+    @Test
+    void hardRandomizesRequiredSpecialSquaresAndProtectsStarts() {
+        BoardGeometry first =
+                BoardGeometry.forDifficulty(Difficulty.HARD, new Random(1));
+        BoardGeometry second =
+                BoardGeometry.forDifficulty(Difficulty.HARD, new Random(2));
+
+        Map<BoardGeometry.SpecialSquare, Integer> expectedCounts = Map.of(
+                BoardGeometry.SpecialSquare.STAR, 12,
+                BoardGeometry.SpecialSquare.EASY_QUESTION, 3,
+                BoardGeometry.SpecialSquare.MEDIUM_QUESTION, 3,
+                BoardGeometry.SpecialSquare.HARD_QUESTION, 3,
+                BoardGeometry.SpecialSquare.SURPRISE, 3);
+
+        Map<Integer, BoardGeometry.SpecialSquare> firstLayout =
+                new java.util.HashMap<>();
+        Map<Integer, BoardGeometry.SpecialSquare> secondLayout =
+                new java.util.HashMap<>();
+
+        assertEquals(first.getTrack(), second.getTrack());
+        assertEquals(markers(first, true), markers(second, true));
+        assertEquals(4, markers(first, true).size());
+        assertEquals(12, markers(first, false).size());
+
+        for (BoardGeometry board : List.of(first, second)) {
+            Map<BoardGeometry.SpecialSquare, Integer> counts =
+                    new EnumMap<>(BoardGeometry.SpecialSquare.class);
+
+            for (int index = 0; index < board.getTrack().size(); index++) {
+                BoardGeometry.SpecialSquare square =
+                        board.getSpecialSquare(index);
+                boolean isStart = board.getStartingColor(index) != null;
+
+                if (square != null) {
+                    assertNull(board.getStartingColor(index),
+                            "Special square overlaps a start: " + index);
+                    assertNull(board.getArrow(index),
+                            "Special square overlaps an arrow: " + index);
+                    counts.merge(square, 1, Integer::sum);
+                }
+
+                boolean shouldBeProtected =
+                        isStart
+                        || square == BoardGeometry.SpecialSquare.STAR
+                        || square == BoardGeometry.SpecialSquare.SURPRISE;
+
+                assertEquals(shouldBeProtected, board.isProtectedSquare(index),
+                        "Incorrect protection at track index " + index);
+            }
+
+            assertEquals(expectedCounts, counts);
+        }
+
+        for (int index = 0; index < first.getTrack().size(); index++) {
+            assertEquals(first.getArrow(index), second.getArrow(index),
+                    "Random placement must not change arrows: " + index);
+
+            if (first.getSpecialSquare(index) != null) {
+                firstLayout.put(index, first.getSpecialSquare(index));
+            }
+            if (second.getSpecialSquare(index) != null) {
+                secondLayout.put(index, second.getSpecialSquare(index));
+            }
+        }
+
+        assertNotEquals(firstLayout, secondLayout,
+                "Different seeds should produce different special-square layouts");
+    }
+
+    @Test
+    void hardPiecesFollowAllThreeRingsAndReachTheirOwnHome() {
+        Game game = Game.start(
+                new GameConfig(SLOTS, Difficulty.HARD), Dice.scripted(6));
+        BoardGeometry board = game.getBoardGeometry();
+
+        Map<PlayerColor, GridPoint> starts = Map.of(
+                PlayerColor.RED, new GridPoint(0, 0),
+                PlayerColor.GREEN, new GridPoint(18, 0),
+                PlayerColor.YELLOW, new GridPoint(18, 18),
+                PlayerColor.BLUE, new GridPoint(0, 18));
+
+        Map<PlayerColor, GridPoint> homeEntries = Map.of(
+                PlayerColor.RED, new GridPoint(3, 9),
+                PlayerColor.GREEN, new GridPoint(9, 3),
+                PlayerColor.YELLOW, new GridPoint(15, 9),
+                PlayerColor.BLUE, new GridPoint(9, 15));
+
+        for (Player player : game.getPlayers()) {
+            PlayerColor color = player.getColor();
+            Piece piece = player.getPieces().get(0);
+
+            assertEquals(PieceLocation.CASTLE, piece.getLocation());
+            MovementRules.apply(piece, 6);
+            assertEquals(starts.get(color), BoardGeometry.cellFor(piece));
+
+            Set<Integer> visited = new HashSet<>();
+            int ownArrowsPassed = 0;
+
+            for (int progress = 0; progress < 182; progress++) {
+                assertEquals(PieceLocation.TRACK, piece.getLocation(),
+                        "Unexpected location for " + color + " at " + progress);
+
+                int index = piece.getTrackIndex();
+                assertTrue(visited.add(index),
+                        "Repeated track square for " + color + ": " + index);
+
+                BoardGeometry.Arrow arrow = board.getArrow(index);
+                MovementRules.apply(piece, 1);
+
+                if (arrow != null && arrow.color() == color) {
+                    ownArrowsPassed++;
+                    assertEquals(arrow.destination(),
+                            BoardGeometry.cellFor(piece));
+                } else {
+                    int nextIndex;
+                    if (index < 72) {
+                        nextIndex = (index + 1) % 72;
+                    } else if (index < 136) {
+                        nextIndex = 72 + (index - 72 + 1) % 64;
+                    } else {
+                        nextIndex = 136 + (index - 136 + 1) % 52;
+                    }
+                    assertEquals(nextIndex, piece.getTrackIndex());
+                }
+            }
+
+            assertEquals(3, ownArrowsPassed);
+            assertEquals(182, visited.size());
+            assertEquals(PieceLocation.HOME, piece.getLocation());
+            assertEquals(0, piece.getHomeIndex());
+            assertEquals(homeEntries.get(color), BoardGeometry.cellFor(piece));
+            assertEquals(6, board.getHomeLane(color).size());
+
+            assertFalse(MovementRules.isLegal(piece, 6));
+            assertTrue(MovementRules.isLegal(piece, 5));
+            MovementRules.apply(piece, 5);
+
+            assertTrue(piece.isFinished());
+            assertEquals(board.getHomeLane(color).get(5),
+                    BoardGeometry.cellFor(piece));
+            assertFalse(MovementRules.isLegal(piece, 1));
+        }
+    }
+
     private static BoardGeometry medium(long seed) {
         return BoardGeometry.forDifficulty(Difficulty.MEDIUM, new Random(seed));
     }
