@@ -16,20 +16,33 @@ class DiceGameplayTest {
             new GameConfig.Slot("Sam", PlayerColor.BLUE));
 
     @Test
-    void difficultyUsesTheExistingDiceFactoriesAndHardStillCannotStart() {
+    void difficultyUsesTheExistingDiceFactoriesAndHardCanStart() {
         assertInstanceOf(Dice.class, new RegularDiceCreator().createDice());
         assertNull(Difficulty.EASY.createMultiplierDie());
         assertInstanceOf(BoostDice.class, Difficulty.MEDIUM.createMultiplierDie());
         assertInstanceOf(UltraBoostDice.class, Difficulty.HARD.createMultiplierDie());
 
-        DiceRoll easy = Game.start(new GameConfig(PLAYERS, Difficulty.EASY)).roll().getDiceRoll();
+        DiceRoll easy = Game.start(
+                new GameConfig(PLAYERS, Difficulty.EASY)).roll().getDiceRoll();
         assertFalse(easy.hasMultiplier());
         assertEquals(easy.regularValue(), easy.movementSteps());
 
-        DiceRoll medium = Game.start(new GameConfig(PLAYERS, Difficulty.MEDIUM)).roll().getDiceRoll();
+        DiceRoll medium = Game.start(
+                new GameConfig(PLAYERS, Difficulty.MEDIUM)).roll().getDiceRoll();
         assertTrue(medium.hasMultiplier());
-        assertTrue(medium.multiplierValue() >= 1 && medium.multiplierValue() <= 3);
-        assertThrows(IllegalArgumentException.class, () -> Game.start(new GameConfig(PLAYERS, Difficulty.HARD)));
+        assertTrue(medium.multiplierValue() >= 1
+                && medium.multiplierValue() <= 3);
+
+        Game hardGame = Game.start(new GameConfig(PLAYERS, Difficulty.HARD));
+        assertEquals(Difficulty.HARD, hardGame.getBoardGeometry().getDifficulty());
+
+        DiceRoll hard = hardGame.roll().getDiceRoll();
+        assertTrue(hard.hasMultiplier());
+        assertTrue(hard.regularValue() >= 1 && hard.regularValue() <= 6);
+        assertTrue(hard.multiplierValue() >= 1 && hard.multiplierValue() <= 6);
+        assertEquals(
+                hard.regularValue() * (hard.multiplierValue() - 1),
+                hard.movementSteps());
     }
 
     @Test

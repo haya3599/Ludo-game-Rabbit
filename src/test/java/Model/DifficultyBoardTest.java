@@ -28,14 +28,19 @@ class DifficultyBoardTest {
     }
 
     @Test
-    void gameStartupReportsMissingHardLayoutForAnOtherwiseValidConfiguration() {
-        GameConfig hard = new GameConfig(SLOTS, Difficulty.HARD);
-        ValidationResult validation = GameConfigValidator.validate(hard);
-        assertFalse(validation.isValid());
-        assertEquals("The Hard board layout is unavailable.", validation.getMessage());
+    void hardGameStartsWithAllThreeTrackRings() {
+        GameConfig config = new GameConfig(SLOTS, Difficulty.HARD);
 
-        var failure = assertThrows(IllegalArgumentException.class, () -> Game.start(hard, Dice.scripted(6)));
-        assertEquals(validation.getMessage(), failure.getMessage());
+        ValidationResult validation = GameConfigValidator.validate(config);
+        assertTrue(validation.isValid(), validation.getMessage());
+
+        Game game = Game.start(config, Dice.scripted(6));
+        BoardGeometry board = game.getBoardGeometry();
+
+        assertEquals(Difficulty.HARD, board.getDifficulty());
+        assertEquals(19, board.getGridSize());
+        assertEquals(188, board.getTrack().size());
+        assertEquals(188, new HashSet<>(board.getTrack()).size());
     }
 
     @Test
