@@ -53,9 +53,13 @@ class DiceGameplayTest {
         assertEquals(30, new DiceRoll(6, 6).movementSteps());
     }
 
-    @Test
-    void zeroStepsOnANonSixPassesWithoutMovingAPiece() {
-        Game game = medium(Dice.scripted(5), Dice.scripted(1));
+    @ParameterizedTest
+    @EnumSource(value = Difficulty.class, names = {"MEDIUM", "HARD"})
+    void zeroStepsOnANonSixPassesWithoutMovingAPiece(Difficulty difficulty) {
+        Game game = Game.start(
+                new GameConfig(PLAYERS, difficulty),
+                Dice.scripted(5),
+                Dice.scripted(1));
         Piece piece = game.getCurrentPlayer().getPieces().get(0);
         piece.placeAtProgress(9);
 
@@ -70,9 +74,13 @@ class DiceGameplayTest {
         assertEquals(2, game.getTurnNumber());
     }
 
-    @Test
-    void zeroStepsOnASixKeepsTheRollWhenAllPiecesAreOut() {
-        Game game = medium(Dice.scripted(6, 6, 6), Dice.scripted(1, 1, 1));
+    @ParameterizedTest
+    @EnumSource(value = Difficulty.class, names = {"MEDIUM", "HARD"})
+    void zeroStepsOnASixKeepsTheRollWhenAllPiecesAreOut(Difficulty difficulty) {
+        Game game = Game.start(
+                new GameConfig(PLAYERS, difficulty),
+                Dice.scripted(6, 6, 6),
+                Dice.scripted(1, 1, 1));
         Player player = game.getCurrentPlayer();
         for (Piece piece : player.getPieces()) {
             piece.placeAtProgress(piece.getIndex());
