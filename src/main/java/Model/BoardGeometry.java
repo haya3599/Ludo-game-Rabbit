@@ -116,7 +116,7 @@ public final class BoardGeometry {
         return switch (difficulty) {
             case EASY -> EASY;
             case MEDIUM -> createMedium(random);
-            case HARD -> throw new IllegalArgumentException("The Hard board layout is unavailable.");
+            case HARD -> createHard(random);
         };
     }
 
@@ -169,6 +169,79 @@ public final class BoardGeometry {
         return board;
     }
 
+    private static BoardGeometry createHard(Random random) {
+        int gridSize = GRID_SIZE + 4;
+
+        Map<PlayerColor, GridPoint> starts = Map.of(
+                PlayerColor.RED, new GridPoint(0, 0),
+                PlayerColor.GREEN, new GridPoint(18, 0),
+                PlayerColor.YELLOW, new GridPoint(18, 18),
+                PlayerColor.BLUE, new GridPoint(0, 18));
+
+        Map<PlayerColor, List<GridPoint>> arrows = Map.of(
+                PlayerColor.RED, List.of(
+                        new GridPoint(0, 7),
+                        new GridPoint(1, 8),
+                        new GridPoint(2, 9)),
+                PlayerColor.GREEN, List.of(
+                        new GridPoint(11, 0),
+                        new GridPoint(10, 1),
+                        new GridPoint(9, 2)),
+                PlayerColor.YELLOW, List.of(
+                        new GridPoint(18, 11),
+                        new GridPoint(17, 10),
+                        new GridPoint(16, 9)),
+                PlayerColor.BLUE, List.of(
+                        new GridPoint(7, 18),
+                        new GridPoint(8, 17),
+                        new GridPoint(9, 16)));
+
+        Map<PlayerColor, PlayerColor> easyColors = Map.of(
+                PlayerColor.RED, PlayerColor.GREEN,
+                PlayerColor.GREEN, PlayerColor.YELLOW,
+                PlayerColor.YELLOW, PlayerColor.BLUE,
+                PlayerColor.BLUE, PlayerColor.RED);
+
+        Map<PlayerColor, List<GridPoint>> homeLanes =
+                new EnumMap<>(PlayerColor.class);
+        Map<PlayerColor, List<GridPoint>> castleSlots =
+                new EnumMap<>(PlayerColor.class);
+        Map<PlayerColor, GridPoint> yards =
+                new EnumMap<>(PlayerColor.class);
+
+        for (PlayerColor color : PlayerColor.values()) {
+            PlayerColor easyColor = easyColors.get(color);
+
+            homeLanes.put(color, HOME_LANES.get(easyColor).stream()
+                    .map(point -> inset(inset(point))).toList());
+
+            castleSlots.put(color, CASTLE_SLOTS.get(easyColor).stream()
+                    .map(point -> inset(inset(point))).toList());
+
+            yards.put(color,
+                    inset(inset(YARD_ORIGINS.get(easyColor))));
+        }
+
+        List<GridPoint> middleTrack = perimeter(GRID_SIZE + 2).stream()
+                .map(BoardGeometry::inset).toList();
+
+        List<GridPoint> innerTrack = TRACK.stream()
+                .map(point -> inset(inset(point))).toList();
+
+        BoardGeometry board = new BoardGeometry(
+                Difficulty.HARD,
+                gridSize,
+                List.of(perimeter(gridSize), middleTrack, innerTrack),
+                starts,
+                arrows,
+                homeLanes,
+                castleSlots,
+                yards);
+
+        board.placeSpecialSquares(random);
+        return board;
+    }
+
     private static GridPoint inset(GridPoint point) {
         return new GridPoint(point.column() + 1, point.row() + 1);
     }
@@ -185,17 +258,29 @@ public final class BoardGeometry {
 
     private void placeSpecialSquares(Random random) {
         List<Integer> available = new ArrayList<>();
+
         for (int index = 0; index < track.size(); index++) {
             if (!starts.containsKey(index) && !arrows.containsKey(index)) {
                 available.add(index);
             }
         }
+
         Collections.shuffle(available, random);
-        List<SpecialSquare> required = new ArrayList<>(Collections.nCopies(8, SpecialSquare.STAR));
-        for (SpecialSquare square : List.of(SpecialSquare.EASY_QUESTION, SpecialSquare.MEDIUM_QUESTION,
-                SpecialSquare.HARD_QUESTION, SpecialSquare.SURPRISE)) {
-            required.addAll(Collections.nCopies(2, square));
+
+        int starCount = difficulty == Difficulty.HARD ? 12 : 8;
+        int countPerType = difficulty == Difficulty.HARD ? 3 : 2;
+
+        List<SpecialSquare> required = new ArrayList<>(
+                Collections.nCopies(starCount, SpecialSquare.STAR));
+
+        for (SpecialSquare square : List.of(
+                SpecialSquare.EASY_QUESTION,
+                SpecialSquare.MEDIUM_QUESTION,
+                SpecialSquare.HARD_QUESTION,
+                SpecialSquare.SURPRISE)) {
+            required.addAll(Collections.nCopies(countPerType, square));
         }
+
         for (int i = 0; i < required.size(); i++) {
             specialSquares.put(available.get(i), required.get(i));
         }
@@ -239,8 +324,10 @@ public final class BoardGeometry {
 
     boolean isProtectedSquare(int trackIndex) {
         SpecialSquare square = getSpecialSquare(trackIndex);
-        return square == SpecialSquare.STAR || square == SpecialSquare.SURPRISE
-                || (difficulty == Difficulty.MEDIUM && starts.containsKey(trackIndex));
+        return square == SpecialSquare.STAR
+                || square == SpecialSquare.SURPRISE
+                || (difficulty != Difficulty.EASY
+                    && starts.containsKey(trackIndex));
     }
 
     int getTrackIndex(PlayerColor color, int progress) {

@@ -26,7 +26,7 @@ public enum Difficulty {
     }
 
     public boolean isBoardAvailable() {
-        return this != HARD;
+        return true;
     }
 
     public String getDisplayName() {
