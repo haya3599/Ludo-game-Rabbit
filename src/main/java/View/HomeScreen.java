@@ -20,6 +20,7 @@ public final class HomeScreen extends JPanel {
     private final RoyalButton play = new RoyalButton("NEW GAME", true);
     private final RoyalButton history = new RoyalButton("GAME HISTORY", false);
     private final RoyalButton questions = new RoyalButton("QUESTION MANAGEMENT", false);
+    private final RoyalButton howToPlay = new RoyalButton("How to Play");
     private final Board board = new Board();
     private final Card[] cards = {
         new Card("01", "EASY", "Start your royal journey", "CLASSIC LUDO  •  LEARN THE RULES", 0),
@@ -47,6 +48,7 @@ public final class HomeScreen extends JPanel {
         add(rabbitArt);
         add(board);
         add(play); add(history); add(questions);
+        add(howToPlay);
         for(Card c:cards) add(c);
         history.addActionListener(e -> ComingSoon.show(this));
         questions.addActionListener(e -> ComingSoon.show(this));
@@ -57,6 +59,10 @@ public final class HomeScreen extends JPanel {
     public void setOnNewGame(Runnable action) {
         play.addActionListener(e -> { if(action!=null) action.run(); });
     }
+    public void setOnHowToPlay(Runnable action) {
+        howToPlay.addActionListener(e -> action.run());
+    }
+
     private void loadRabbit() {
         try(InputStream in=HomeScreen.class.getResourceAsStream("/royal_rabbit.png")) {
             if(in!=null) rabbit=ImageIO.read(in);
@@ -79,6 +85,7 @@ public final class HomeScreen extends JPanel {
     private void position() {
         place(rabbitArt,433,39,278,375);
         place(board,727,82,337,333);
+        place(howToPlay,1003,14,114,44);
         place(play,78,302,338,48);
         place(history,78,359,155,40);
         place(questions,243,359,184,40);
@@ -143,10 +150,10 @@ public final class HomeScreen extends JPanel {
         brandLine.setColor(new Color(255, 245, 207));
         brandLine.fillOval(272, 42, 4, 4);
         brandLine.dispose();
-        centered(g,"L U D O  A C A D E M Y",994,36,new Font("Georgia",Font.BOLD,19),GOLD);
-        centered(g,"R O Y A L   E D I T I O N",994,54,new Font("SansSerif",Font.BOLD,9),CREAM);
+        centered(g,"L U D O  A C A D E M Y",878,36,new Font("Georgia",Font.BOLD,19),GOLD);
+        centered(g,"R O Y A L   E D I T I O N",878,54,new Font("SansSerif",Font.BOLD,9),CREAM);
         g.setColor(new Color(235,180,95,115));g.setStroke(new BasicStroke(.8f));g.drawLine(42,65,426,65);
-        g.drawLine(900,64,1092,64);
+        g.drawLine(782,64,974,64);
         // Left copy
         centered(g,"✦  W E L C O M E  T O  T H E  R O Y A L  E D I T I O N  ✦",255,88,
                 new Font("SansSerif",Font.BOLD,11),GOLD);
@@ -335,11 +342,30 @@ public final class HomeScreen extends JPanel {
         }
         z.fillOval(-2,-2,4,4);z.dispose();
     }
-    private static class RoyalButton extends JButton {
-        final boolean primary;double scale=1;
-        RoyalButton(String s,boolean p) {super(s);primary=p;setOpaque(false);setContentAreaFilled(false);
-            setBorderPainted(false);setFocusPainted(false);setRolloverEnabled(true);
-            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));}
+    static final class RoyalButton extends JButton {
+        private final boolean primary;
+        private final boolean showIcon;
+        private double scale = 1;
+
+        RoyalButton(String text) {
+            this(text, false, false);
+        }
+
+        RoyalButton(String text, boolean primary) {
+            this(text, primary, true);
+        }
+
+        private RoyalButton(String text, boolean primary, boolean showIcon) {
+            super(text);
+            this.primary = primary;
+            this.showIcon = showIcon;
+            setOpaque(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setRolloverEnabled(true);
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
         void setScale(double s){scale=s;repaint();}
         @Override protected void paintComponent(Graphics gr) {
             Graphics2D g=(Graphics2D)gr.create();g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
@@ -349,18 +375,20 @@ public final class HomeScreen extends JPanel {
                 g.setPaint(new GradientPaint(0,2,new Color(255,243,183),0,h,new Color(199,131,46)));
             } else g.setPaint(new GradientPaint(0,0,new Color(58,35,84),0,h,new Color(18,17,49)));
             g.fillRoundRect(3,3,w-6,h-6,arc,arc);
-            g.setColor(getModel().isRollover()?new Color(255,250,193):GOLD);
+            boolean highlighted = getModel().isRollover() || (!showIcon && isFocusOwner());
+            g.setColor(highlighted ? new Color(255,250,193) : GOLD);
             g.setStroke(new BasicStroke((float)Math.max(1,1.4*scale)));g.drawRoundRect(3,3,w-7,h-7,arc,arc);
             g.setColor(new Color(255,237,185,110));g.drawRoundRect(6,6,w-13,h-13,arc,arc);
             if(primary) {crown(g,(int)(75*scale),(h-(int)(24*scale))/2,(int)(26*scale));}
-            else {
+            else if (showIcon) {
                 if (getText().equals("GAME HISTORY")) drawClock(g,(int)(17*scale),h/2,(int)(7*scale));
                 else drawGear(g,(int)(17*scale),h/2,(int)(7*scale));
             }
-            g.setFont(new Font("SansSerif",Font.BOLD,Math.max(9,(int)((primary?19:11)*scale))));
+            int fontSize = primary ? 19 : (showIcon ? 11 : 13);
+            g.setFont(new Font("SansSerif", Font.BOLD, Math.max(9, (int) (fontSize * scale))));
             g.setColor(primary?new Color(32,20,42):CREAM);
             FontMetrics fm=g.getFontMetrics();int tx=(w-fm.stringWidth(getText()))/2+(primary?(int)(10*scale):0);
-            if (!primary) tx=Math.max(tx,(int)(36*scale));
+            if (!primary && showIcon) tx=Math.max(tx,(int)(36*scale));
             g.drawString(getText(),tx,(h-fm.getHeight())/2+fm.getAscent());g.dispose();
         }
     }
