@@ -75,13 +75,13 @@ class HomeScreensTest {
                     "Game Objective", "Starting a Game", "Basic Dice Rules", "Moving Pieces",
                     "Captures and Protection", "Difficulty Levels", "Special Squares",
                     "Winning and Final Rankings", "2–4 players", "different colour",
-                    "Choose Easy or Medium, then select Start Game", "Regular 6",
+                    "Choose Easy, Medium, or Hard, then select Start Game", "Regular 6",
                     "grants an extra roll unless you finish all four pieces", "the third roll is canceled",
                     "must match the steps still needed", "Double Block",
                     "Easy is available now", "Medium is available now", "Boost Dice (1–3)",
-                    "Hard is planned", "UltraBoost Dice",
+                    "Hard is available now", "UltraBoost Dice",
                     "Movement = Regular Dice × (Multiplier Die − 1)", "determines castle exit",
-                    "A # on a coloured track square marks", "Stars protect pieces from capture on both boards",
+                    "A # on a coloured track square marks", "Stars protect pieces from capture on all boards",
                     "Landing on an unprotected track square", "A player finishes",
                     "only one player is still unfinished", "that player ranks last")) {
                 assertTrue(text.contains(required), () -> "The guide is missing \"" + required + "\"");

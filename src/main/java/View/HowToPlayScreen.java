@@ -15,7 +15,7 @@ import java.awt.Font;
 import java.awt.Image;
 import java.net.URL;
 
-/** Player guide for Easy, Medium, and planned rules. */
+/** Player guide for Easy, Medium, Hard, and planned rules. */
 public final class HowToPlayScreen extends JPanel {
 
     private static final Color PURPLE = new Color(27, 12, 49);
@@ -40,7 +40,7 @@ public final class HowToPlayScreen extends JPanel {
 
               <h2>Starting a Game</h2>
               <p>Select <b>New Game</b>, choose 2–4 players, enter their names, and give each player a different colour.
-              Choose <b>Easy</b> or <b>Medium</b>, then select <b>Start Game</b>.</p>
+              Choose <b>Easy</b>, <b>Medium</b>, or <b>Hard</b>, then select <b>Start Game</b>.</p>
 
               <h2>Basic Dice Rules</h2>
               <p>The Regular Dice rolls 1–6. A Regular 6 lets you place one piece from your castle on your
@@ -53,11 +53,11 @@ public final class HowToPlayScreen extends JPanel {
               <p>Roll the dice and select one of your highlighted pieces. Pieces move clockwise and follow
               arrows of their own colour. To reach final home, your move must match the steps still needed.
               If the roll would take a piece past final home, choose another legal piece. If you have no legal move,
-              the turn passes. In Medium, a Regular 6 with zero steps still grants another roll.</p>
+              the turn passes. In Medium and Hard, a Regular 6 with zero steps still grants another roll.</p>
 
               <h2>Captures and Protection</h2>
               <p>Landing on an unprotected track square occupied by exactly one opponent piece
-              sends it back to its castle. Stars protect pieces from capture on both boards. In Medium,
+              sends it back to its castle. Stars protect pieces from capture on all boards. In Medium and Hard,
               # start squares and surprise squares also protect pieces.</p>
               <p><b class="status">Planned.</b> A Double Block forms when two pieces of the same player share a square.
               Opponents cannot land on or pass through it. A player can break their own block by moving one of its pieces.</p>
@@ -65,7 +65,7 @@ public final class HowToPlayScreen extends JPanel {
               <h2>Difficulty Levels</h2>
               <p><b>Easy</b> is available now and uses the Regular Dice (1–6).</p>
               <p><b>Medium</b> is available now and adds the Boost Dice (1–3) to the Regular Dice.
-              <b>Hard</b> is planned and uses the UltraBoost Dice (1–6) with the Regular Dice.</p>
+              <b>Hard</b> is available now and uses the UltraBoost Dice (1–6) with the Regular Dice.</p>
               <p class="formula">Movement = Regular Dice × (Multiplier Die − 1)</p>
               <p>The formula applies to pieces already on the board. A multiplier die showing 1 gives zero steps.
               Only the Regular Dice determines castle exit. A Regular 6 can release a piece even when the
@@ -73,7 +73,7 @@ public final class HowToPlayScreen extends JPanel {
 
               <h2>Special Squares</h2>
               <p>A # on a coloured track square marks that colour's start. Coloured arrows guide matching pieces
-              into their home lanes and, on the Medium board, onto the next inner track. The last coloured
+              into their home lanes and, on Medium and Hard, onto the next inner track. The last coloured
               square in each home lane is final home.</p>
               <p><b class="status">Planned.</b> Question squares (?) draw a random question when a piece lands on them.
               Green is easy, yellow is medium, and red is hard. A correct answer moves the piece forward and
