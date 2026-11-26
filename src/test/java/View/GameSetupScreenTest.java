@@ -90,7 +90,7 @@ class GameSetupScreenTest {
     }
 
     @Test
-    void disabledHardButtonCannotChangeWhichBoardStarts() throws Exception {
+    void selectingHardStartsTheHardBoard() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             GameSetupScreen setup = new GameSetupScreen();
             AtomicReference<Game> started = new AtomicReference<>();
@@ -99,14 +99,18 @@ class GameSetupScreenTest {
             JButton medium = button(setup, "Medium"::equals);
             JButton hard = button(setup, "Hard"::equals);
             medium.doClick(0);
-            assertFalse(hard.isEnabled());
+            assertTrue(hard.isEnabled());
             hard.doClick(0);
 
-            assertFalse(hard.isSelected());
-            assertTrue(medium.isSelected());
+            assertTrue(hard.isSelected());
+            assertFalse(medium.isSelected());
+            assertEquals(Difficulty.HARD, setup.readConfig().getDifficultyLevel());
             assertNull(started.get());
             button(setup, text -> text.startsWith("Start Game")).doClick(0);
-            assertEquals(Difficulty.MEDIUM, started.get().getBoardGeometry().getDifficulty());
+            assertNotNull(started.get());
+            assertEquals(Difficulty.HARD, started.get().getBoardGeometry().getDifficulty());
+            assertEquals(19, started.get().getBoardGeometry().getGridSize());
+            assertEquals(188, started.get().getBoardGeometry().getTrack().size());
         });
     }
 
