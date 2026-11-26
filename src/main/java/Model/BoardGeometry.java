@@ -71,7 +71,7 @@ public final class BoardGeometry {
     private final Map<Integer, Arrow> arrows = new HashMap<>();
     private final Map<Integer, SpecialSquare> specialSquares = new HashMap<>();
 
-    private BoardGeometry(Difficulty difficulty, int gridSize, List<List<GridPoint>> rings,
+    BoardGeometry(Difficulty difficulty, int gridSize, List<List<GridPoint>> rings,
                           Map<PlayerColor, GridPoint> startCells, Map<PlayerColor, List<GridPoint>> arrowCells,
                           Map<PlayerColor, List<GridPoint>> homeLanes, Map<PlayerColor, List<GridPoint>> castleSlots,
                           Map<PlayerColor, GridPoint> yardOrigins) {
@@ -115,8 +115,8 @@ public final class BoardGeometry {
     static BoardGeometry forDifficulty(Difficulty difficulty, Random random) {
         return switch (difficulty) {
             case EASY -> EASY;
-            case MEDIUM -> createMedium(random);
-            case HARD -> createHard(random);
+            case MEDIUM -> new MediumBoardLayout().build(random);
+            case HARD -> new HardBoardLayout().build(random);
         };
     }
 
@@ -137,126 +137,7 @@ public final class BoardGeometry {
         return board;
     }
 
-    private static BoardGeometry createMedium(Random random) {
-        // Ludo Project, p. 2: a 64-square perimeter surrounds the 15 by 15 inner board.
-        int gridSize = GRID_SIZE + 2;
-        Map<PlayerColor, GridPoint> starts = Map.of(
-                PlayerColor.RED, new GridPoint(0, 0), PlayerColor.GREEN, new GridPoint(16, 0),
-                PlayerColor.YELLOW, new GridPoint(16, 16), PlayerColor.BLUE, new GridPoint(0, 16));
-        Map<PlayerColor, GridPoint> outerArrows = Map.of(
-                PlayerColor.RED, new GridPoint(0, 7), PlayerColor.GREEN, new GridPoint(9, 0),
-                PlayerColor.YELLOW, new GridPoint(16, 9), PlayerColor.BLUE, new GridPoint(7, 16));
-
-        // The Medium figure assigns the inner yards clockwise from red at the top left.
-        Map<PlayerColor, PlayerColor> easyColors = Map.of(
-                PlayerColor.RED, PlayerColor.GREEN, PlayerColor.GREEN, PlayerColor.YELLOW,
-                PlayerColor.YELLOW, PlayerColor.BLUE, PlayerColor.BLUE, PlayerColor.RED);
-        Map<PlayerColor, List<GridPoint>> arrows = new EnumMap<>(PlayerColor.class);
-        Map<PlayerColor, List<GridPoint>> homeLanes = new EnumMap<>(PlayerColor.class);
-        Map<PlayerColor, List<GridPoint>> castleSlots = new EnumMap<>(PlayerColor.class);
-        Map<PlayerColor, GridPoint> yards = new EnumMap<>(PlayerColor.class);
-        for (PlayerColor color : PlayerColor.values()) {
-            PlayerColor easyColor = easyColors.get(color);
-            arrows.put(color, List.of(outerArrows.get(color), inset(TRACK.get(arrowIndex(easyColor)))));
-            homeLanes.put(color, HOME_LANES.get(easyColor).stream().map(BoardGeometry::inset).toList());
-            castleSlots.put(color, CASTLE_SLOTS.get(easyColor).stream().map(BoardGeometry::inset).toList());
-            yards.put(color, inset(YARD_ORIGINS.get(easyColor)));
-        }
-        List<GridPoint> innerTrack = TRACK.stream().map(BoardGeometry::inset).toList();
-        BoardGeometry board = new BoardGeometry(Difficulty.MEDIUM, gridSize, List.of(perimeter(gridSize), innerTrack),
-                starts, arrows, homeLanes, castleSlots, yards);
-        board.placeSpecialSquares(random);
-        return board;
-    }
-
-    private static BoardGeometry createHard(Random random) {
-        int gridSize = GRID_SIZE + 4;
-
-        Map<PlayerColor, GridPoint> starts = Map.of(
-                PlayerColor.RED, new GridPoint(0, 0),
-                PlayerColor.GREEN, new GridPoint(18, 0),
-                PlayerColor.YELLOW, new GridPoint(18, 18),
-                PlayerColor.BLUE, new GridPoint(0, 18));
-
-        Map<PlayerColor, List<GridPoint>> arrows = Map.of(
-                PlayerColor.RED, List.of(
-                        new GridPoint(0, 7),
-                        new GridPoint(1, 8),
-                        new GridPoint(2, 9)),
-                PlayerColor.GREEN, List.of(
-                        new GridPoint(11, 0),
-                        new GridPoint(10, 1),
-                        new GridPoint(9, 2)),
-                PlayerColor.YELLOW, List.of(
-                        new GridPoint(18, 11),
-                        new GridPoint(17, 10),
-                        new GridPoint(16, 9)),
-                PlayerColor.BLUE, List.of(
-                        new GridPoint(7, 18),
-                        new GridPoint(8, 17),
-                        new GridPoint(9, 16)));
-
-        Map<PlayerColor, PlayerColor> easyColors = Map.of(
-                PlayerColor.RED, PlayerColor.GREEN,
-                PlayerColor.GREEN, PlayerColor.YELLOW,
-                PlayerColor.YELLOW, PlayerColor.BLUE,
-                PlayerColor.BLUE, PlayerColor.RED);
-
-        Map<PlayerColor, List<GridPoint>> homeLanes =
-                new EnumMap<>(PlayerColor.class);
-        Map<PlayerColor, List<GridPoint>> castleSlots =
-                new EnumMap<>(PlayerColor.class);
-        Map<PlayerColor, GridPoint> yards =
-                new EnumMap<>(PlayerColor.class);
-
-        for (PlayerColor color : PlayerColor.values()) {
-            PlayerColor easyColor = easyColors.get(color);
-
-            homeLanes.put(color, HOME_LANES.get(easyColor).stream()
-                    .map(point -> inset(inset(point))).toList());
-
-            castleSlots.put(color, CASTLE_SLOTS.get(easyColor).stream()
-                    .map(point -> inset(inset(point))).toList());
-
-            yards.put(color,
-                    inset(inset(YARD_ORIGINS.get(easyColor))));
-        }
-
-        List<GridPoint> middleTrack = perimeter(GRID_SIZE + 2).stream()
-                .map(BoardGeometry::inset).toList();
-
-        List<GridPoint> innerTrack = TRACK.stream()
-                .map(point -> inset(inset(point))).toList();
-
-        BoardGeometry board = new BoardGeometry(
-                Difficulty.HARD,
-                gridSize,
-                List.of(perimeter(gridSize), middleTrack, innerTrack),
-                starts,
-                arrows,
-                homeLanes,
-                castleSlots,
-                yards);
-
-        board.placeSpecialSquares(random);
-        return board;
-    }
-
-    private static GridPoint inset(GridPoint point) {
-        return new GridPoint(point.column() + 1, point.row() + 1);
-    }
-
-    private static List<GridPoint> perimeter(int gridSize) {
-        List<GridPoint> cells = new ArrayList<>();
-        int last = gridSize - 1;
-        for (int i = 0; i < last; i++) cells.add(new GridPoint(i, 0));
-        for (int i = 0; i < last; i++) cells.add(new GridPoint(last, i));
-        for (int i = last; i > 0; i--) cells.add(new GridPoint(i, last));
-        for (int i = last; i > 0; i--) cells.add(new GridPoint(0, i));
-        return cells;
-    }
-
-    private void placeSpecialSquares(Random random) {
+    void placeSpecialSquares(Random random) {
         List<Integer> available = new ArrayList<>();
 
         for (int index = 0; index < track.size(); index++) {
