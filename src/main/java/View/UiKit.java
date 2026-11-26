@@ -36,4 +36,44 @@ public final class UiKit {
         button.setOpaque(true);
         return button;
     }
+    
+public static JButton royalButton(
+        String text,
+        Color background,
+        Color foreground,
+        boolean primary) {
+
+    JButton button = new JButton(text);
+
+    button.setFont(new Font(
+            Font.SANS_SERIF,
+            Font.BOLD,
+            primary ? 17 : 14
+    ));
+
+    button.setBackground(background);
+    button.setForeground(foreground);
+    button.setFocusPainted(false);
+    button.setContentAreaFilled(false);
+    button.setBorderPainted(false);
+    button.setOpaque(false);
+
+    button.setBorder(new EmptyBorder(
+            primary ? 13 : 10,
+            primary ? 28 : 18,
+            primary ? 13 : 10,
+            primary ? 28 : 18
+    ));
+
+    button.setCursor(
+            Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    );
+
+    button.setUI(new javax.swing.plaf.basic.BasicButtonUI());
+
+    button.addChangeListener(event -> button.repaint());
+
+    return button;
+}
+
 }

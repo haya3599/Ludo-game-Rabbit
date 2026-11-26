@@ -5,6 +5,7 @@ package Controller;
  */
 public enum ScreenId {
     HOME,
+    HOW_TO_PLAY,
     SETUP,
     BOARD
 }

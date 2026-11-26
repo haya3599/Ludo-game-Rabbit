@@ -5,6 +5,7 @@ package Model;
  */
 public enum ActionResult {
     OK("Move completed."),
+    GAME_OVER("The game has ended."),
     NOT_YOUR_PIECE("You can only move your own pieces."),
     ILLEGAL_MOVE("That piece cannot make this move."),
     NO_PENDING_MOVE("Roll the dice before choosing a piece.");

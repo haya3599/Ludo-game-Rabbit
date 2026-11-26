@@ -1,7 +1,7 @@
 package Model;
 
 /**
- * The four Ludo colours. Start indexes are 13 squares apart on the 52-square track.
+ * The four Ludo colours. Start indexes here are for the original Easy board.
  */
 public enum PlayerColor {
     RED("Red", 0, 198, 40, 40),

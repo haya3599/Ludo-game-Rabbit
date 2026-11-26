@@ -6,27 +6,27 @@ package Model;
 public final class RollOutcome {
 
     private final boolean accepted;
-    private final int value;
+    private final DiceRoll diceRoll;
     private final boolean movePending;
     private final String message;
 
-    private RollOutcome(boolean accepted, int value, boolean movePending, String message) {
+    private RollOutcome(boolean accepted, DiceRoll diceRoll, boolean movePending, String message) {
         this.accepted = accepted;
-        this.value = value;
+        this.diceRoll = diceRoll;
         this.movePending = movePending;
         this.message = message;
     }
 
     public static RollOutcome rejected(String message) {
-        return new RollOutcome(false, 0, false, message);
+        return new RollOutcome(false, null, false, message);
     }
 
-    public static RollOutcome pending(int value, String message) {
-        return new RollOutcome(true, value, true, message);
+    public static RollOutcome pending(DiceRoll roll, String message) {
+        return new RollOutcome(true, roll, true, message);
     }
 
-    public static RollOutcome passed(int value, String message) {
-        return new RollOutcome(true, value, false, message);
+    public static RollOutcome noMove(DiceRoll roll, String message) {
+        return new RollOutcome(true, roll, false, message);
     }
 
     public boolean isAccepted() {
@@ -34,7 +34,11 @@ public final class RollOutcome {
     }
 
     public int getValue() {
-        return value;
+        return diceRoll == null ? 0 : diceRoll.regularValue();
+    }
+
+    public DiceRoll getDiceRoll() {
+        return diceRoll;
     }
 
     public boolean isMovePending() {

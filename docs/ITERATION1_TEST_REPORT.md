@@ -89,3 +89,22 @@ There is no Swing test that clicks through every button. Rules are covered by JU
 - Home-lane and track coordinates are the conventional Easy layout documented in `docs/ARCHITECTURE.md`. They still need a visual check against the SRS figures.
 - Medium, Hard, questions, captures, blocks, extra turns, ranking, and CSV history are not implemented.
 - `main` does not exist in this clone, so it was not modified. Nothing was pushed to GitHub.
+
+
+## Rules update — 15 November 2026
+
+The earlier sections record the original iteration. This update adds captures,
+protected stars, corrected home entry, finish order, and a results screen.
+
+`mvn -o verify` passed on macOS with JDK 19.0.2 (target 17):
+33 tests, zero failures, zero errors, zero skipped; JAR rebuilt successfully.
+
+New coverage includes single-rival capture and reset to castle, protection on all
+four starred starts, passing pieces, friendly pieces, multiple rivals, separate
+home lanes, arrow-to-home adjacency for all four colours, exact finish, skipping
+finished players, end thresholds for 2/3/4 players, and rejected actions after game end.
+
+A temporary headless Swing harness exercised the controller's final move into the
+results screen, verified the clock stopped and Roll Dice was disabled, and invoked
+the Home callback. The four-player results screen was rendered at 1020 × 740 and
+visually inspected. This is not a full interactive playthrough.

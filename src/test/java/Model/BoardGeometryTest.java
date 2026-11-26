@@ -46,7 +46,41 @@ class BoardGeometryTest {
         assertEquals(39, PlayerColor.BLUE.getStartIndex());
         assertNotNull(BoardGeometry.startingColor(0));
         assertEquals(PlayerColor.RED, BoardGeometry.startingColor(0));
-        assertEquals(51, BoardGeometry.arrowIndex(PlayerColor.RED));
+        assertEquals(50, BoardGeometry.arrowIndex(PlayerColor.RED));
+    }
+
+    @Test
+    void everyArrowLeadsStraightIntoItsHomeLane() {
+        for (PlayerColor color : PlayerColor.values()) {
+            Piece piece = new Player("Player", color).getPieces().get(0);
+            piece.placeAtProgress(Piece.HOME_ENTRY_PROGRESS - 2);
+            MovementRules.apply(piece, 1);
+            GridPoint arrow = BoardGeometry.cellFor(piece);
+            assertEquals(BoardGeometry.track().get(BoardGeometry.arrowIndex(color)), arrow);
+            MovementRules.apply(piece, 1);
+            GridPoint home = BoardGeometry.cellFor(piece);
+            assertEquals(PieceLocation.HOME, piece.getLocation());
+            assertEquals(0, piece.getHomeIndex());
+            assertEquals(1, Math.abs(arrow.column() - home.column())
+                    + Math.abs(arrow.row() - home.row()), color.toString());
+            assertEquals(BoardGeometry.homeLane(color).get(0), home);
+        }
+    }
+
+    @Test
+    void fourStarsOccupyTheUncoloredSquaresInTheReference() {
+        var expected = java.util.Map.of(
+                8, new GridPoint(2, 8), 21, new GridPoint(6, 2),
+                34, new GridPoint(12, 6), 47, new GridPoint(8, 12));
+        int stars = 0;
+        for (int index = 0; index < Piece.TRACK_LENGTH; index++) {
+            if (BoardGeometry.starColor(index) == null) continue;
+            stars++;
+            assertEquals(expected.get(index), BoardGeometry.track().get(index));
+            assertEquals(null, BoardGeometry.startingColor(index));
+            assertTrue(BoardGeometry.isProtected(index));
+        }
+        assertEquals(4, stars);
     }
 
     private static boolean onBoard(GridPoint cell) {

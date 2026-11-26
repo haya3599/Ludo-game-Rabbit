@@ -75,4 +75,15 @@ class GameConfigValidatorTest {
         }
         return new GameConfig(slots);
     }
+        @Test
+    void duplicateNamesAreRejectedEvenWithDifferentColors() {
+        GameConfig config = new GameConfig(List.of(
+                new GameConfig.Slot("Player 1", PlayerColor.RED),
+                new GameConfig.Slot(" player 1 ", PlayerColor.BLUE)));
+
+        ValidationResult result = GameConfigValidator.validate(config);
+
+        assertFalse(result.isValid());
+        assertTrue(result.getMessage().contains("Player 2 needs a different name."));
+    }
 }

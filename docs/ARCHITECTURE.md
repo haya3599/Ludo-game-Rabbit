@@ -36,7 +36,7 @@ The view owns widgets and painting.
 | `DiceFacePanel` | Draws the latest roll |
 | `UiKit` | Shared colours and buttons |
 
-Elapsed time starts when the game screen is created and is updated by a Swing timer. It is display state, not a movement rule. The timer stops when the screen is hidden or removed.
+Elapsed time starts when the game screen is created and is updated by a Swing timer. It is display state, not a movement rule. The timer stops when the screen is hidden, removed, or the game ends.
 
 ## Controller
 
@@ -57,7 +57,7 @@ Elapsed time starts when the game screen is created and is updated by a Swing ti
 
 - The main track has 52 distinct squares, travelled clockwise.
 - Start indexes are 0 (Red), 13 (Green), 26 (Yellow), and 39 (Blue).
-- Each colour has an arrow on the last main-track square of its own route, immediately before it would return to its start.
+- Each colour has an arrow on the last main-track square of its own route, two squares before it would return to its start (track indexes 50, 11, 24, and 37 for Red, Green, Yellow, and Blue). Route progress 0–50 is on the track; 51–56 is in the home lane.
 - The next six steps are that colour's home lane. The sixth square is the final home square.
 - Castle slots are the four piece positions inside each yard.
 
@@ -76,4 +76,8 @@ All four players share one computer. "Only the current player can roll" means th
 
 ## Turn progression
 
-Players act in the order they were added during setup, not in colour order. The turn number starts at 1 and increases when the turn passes. A completed move passes the turn even if the roll was 6. The extra turn, and the rule that cancels a third consecutive 6, are not implemented. `Game` keeps that decision in one place so Iteration 2 can change it without rewriting the board.
+Players act in the order they were added during setup, not in colour order. The turn number starts at 1 and increases when the turn passes. A completed move on a 6 grants another roll unless the player has finished all four pieces. Finished players are recorded in finish order and skipped in subsequent turns. The rule that cancels a third consecutive 6 is not implemented.
+
+After movement, `Game` returns a single opposing piece on the destination track square to its castle, resetting its progress. Only star squares are protected; # start squares allow captures. Passing pieces, friendly pieces, pieces in home lanes, and destinations occupied by multiple rivals do not trigger this capture rule. Double Block rules remain unimplemented.
+
+The game ends as soon as all but one player have finished (1, 2, or 3 finishers for games of 2, 3, or 4). `Game` rejects further rolls and moves. `GameplayController` switches `GameScreen` to results with the finish order followed by the remaining player, stops the clock and disables play. The results button returns directly to Home.

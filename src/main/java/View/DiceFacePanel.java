@@ -8,7 +8,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
 /**
- * Draws the latest regular-die result. Zero means no roll yet.
+ * Draws the latest result for one die. Zero means no roll yet.
  */
 public final class DiceFacePanel extends JPanel {
 

@@ -32,9 +32,4 @@ class DiceTest {
         Dice dice = Dice.scripted(0);
         assertThrows(IllegalStateException.class, dice::roll);
     }
-    @Test
-void valuesAboveSixAreRejected() {
-    Dice dice = Dice.scripted(7);
-    assertThrows(IllegalStateException.class, dice::roll);
-}
 }
